@@ -1,0 +1,14 @@
+CREATE TABLE user (
+    id        INTEGER PRIMARY KEY AUTOINCREMENT,
+    email     VARCHAR(255) NOT NULL,
+    password  VARCHAR(255) NOT NULL,
+    created   DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE user_session (
+    id        INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id   INTEGER NOT NULL,
+    token     VARCHAR(255) NOT NULL,
+    created   DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES user(id)
+);
