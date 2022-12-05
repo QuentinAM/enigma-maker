@@ -1,14 +1,17 @@
-CREATE TABLE user (
-    id        INTEGER PRIMARY KEY AUTOINCREMENT,
+CREATE TABLE users (
+    id        SERIAL       NOT NULL,
     email     VARCHAR(255) NOT NULL,
     password  VARCHAR(255) NOT NULL,
-    created   DATETIME DEFAULT CURRENT_TIMESTAMP
+    created   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE (email)
 );
 
-CREATE TABLE user_session (
-    id        INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id   INTEGER NOT NULL,
+CREATE TABLE users_session (
+    id        SERIAL       NOT NULL,
+    user_id   INTEGER      NOT NULL,
     token     VARCHAR(255) NOT NULL,
-    created   DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES user(id)
+    created   TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    FOREIGN KEY (user_id) REFERENCES users(id)
 );
