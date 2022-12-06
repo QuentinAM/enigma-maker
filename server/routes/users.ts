@@ -1,6 +1,7 @@
 import { pool } from "../index";
 import { QueryResult } from "pg";
 import { RetrieveUserInfos } from '../utils/users';
+import { CheckParams } from "../utils";
 import * as jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import express  from "express";
@@ -12,6 +13,11 @@ export const router = express.Router();
 router.post("/users", async (req, res) => {
     try
     {
+        if (!CheckParams(req.body, ["password", "email"]))
+        {
+            return res.status(400).json({ message: "Missing parameters" });
+        }
+
         const { email, password } = req.body;
         
         // Encrypt password
@@ -19,7 +25,7 @@ router.post("/users", async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, salt);
 
         await pool.query("INSERT INTO users (id, email, password) VALUES (DEFAULT, $1, $2);", [email, hashedPassword]);
-        res.json({ message: "User created successfully" });
+        res.status(200).json({ message: "User created successfully" });
     }
     catch (error: any)
     {
@@ -37,19 +43,28 @@ router.post("/users/login", async (req, res) => {
         
         if (session_token)
         {
-            const user = jwt.verify(session_token, secret);
+            const user: any = jwt.verify(session_token, secret);
 
             if (user)
             {
-                const userInfos = await RetrieveUserInfos(undefined, session_token);
+                const userInfos: QueryResult = await RetrieveUserInfos(user.id);
 
-                // Retrieve user infos
-                return res.status(200).json({ message: "User logged in successfully", user: userInfos });
+                if (userInfos.rowCount > 0)
+                {   
+                    // Retrieve user infos
+                    return res.status(200).json({ message: "User logged in successfully", user: userInfos.rows[0] });
+                }
+                return res.status(400).json({ message: "User not found" });
             }
             else
             {
                 return res.status(400).json({ message: "Invalid session token" });
             }
+        }
+
+        if (!CheckParams(req.body, ["password", "email"]))
+        {
+            return res.status(400).json({ message: "Missing parameters" });
         }
 
         // Find hashed password in database
@@ -71,14 +86,11 @@ router.post("/users/login", async (req, res) => {
 
         // Create and assign a token
         const id: number = user.rows[0].id;
-        const token: string = jwt.sign({ id: id }, secret);
+        const token = jwt.sign({ id }, secret, { expiresIn: 86400 });
 
         // Add token to database
-        await pool.query("UPDATE users SET session_token = $1 WHERE id = $2;", [token, id]);
-
-        // Retrieve user infos
-        const userInfos = await RetrieveUserInfos(id, undefined);
-        return res.status(200).json({ token, user: userInfos });
+        const user_infos: QueryResult = await pool.query("UPDATE users SET session_token = $1 WHERE id = $2 RETURNING (email, password);", [token, id]);
+        return res.status(200).json({ token, user: user_infos.rows[0] });
     }
     catch (error: any)
     {
