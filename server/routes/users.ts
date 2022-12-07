@@ -1,7 +1,7 @@
 import { pool } from "../index";
 import { QueryResult } from "pg";
 import { RetrieveUserInfos } from '../utils/users';
-import { CheckParams } from "../utils";
+import { CheckParams, CheckSessionToken } from "../utils";
 import * as jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import express  from "express";
@@ -38,12 +38,11 @@ router.post("/users", async (req, res) => {
 router.post("/users/login", async (req, res) => {
     try
     {
-        const { email, password, session_token } = req.body;
+        const session_token: string = req.headers.session_token as string;
         const secret: jwt.Secret = process.env.TOKEN_SECRET as jwt.Secret;
-        
         if (session_token)
         {
-            const user: any = jwt.verify(session_token, secret);
+            const user: any = CheckSessionToken(session_token);
 
             if (user)
             {
@@ -61,6 +60,9 @@ router.post("/users/login", async (req, res) => {
                 return res.status(400).json({ message: "Invalid session token" });
             }
         }
+
+        const { email, password } = req.body;
+    
 
         if (!CheckParams(req.body, ["password", "email"]))
         {

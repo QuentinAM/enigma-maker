@@ -21,13 +21,16 @@ CREATE TABLE enigma(
 );
 
 CREATE TABLE enigma_step(
-    id          SERIAL       NOT NULL,
-    enigma_id   INTEGER      NOT NULL,
-    index       INTEGER      NOT NULL,
-    title       VARCHAR(255) NOT NULL,
-    description TEXT         NOT NULL,
-    solution    TEXT         NOT NULL,
-    created     TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+    id             SERIAL       NOT NULL,
+    enigma_id      INTEGER      NOT NULL,
+    index          INTEGER      NOT NULL,
+    title          VARCHAR(255) NOT NULL,
+    description    TEXT         ,
+    attempt_limit  INTEGER      DEFAULT 0, -- 0 = unlimited
+    time_refresh   INTEGER      DEFAULT 0, -- in seconds, 0 = no refresh
+    solution       TEXT         DEFAULT '',
+    case_sensitive BOOLEAN      DEFAULT TRUE,
+    created        TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
     FOREIGN KEY (enigma_id) REFERENCES enigma(id)
 );
