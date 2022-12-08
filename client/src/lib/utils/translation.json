@@ -1,0 +1,12 @@
+{
+	"FR": {
+		"home": "Accueil",
+		"search": "Rechercher",
+		"view": "Voir"
+	},
+	"EN": {
+		"home": "Home",
+		"search": "Search",
+		"view": "View"
+	}
+}

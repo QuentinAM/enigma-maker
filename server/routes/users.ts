@@ -10,7 +10,7 @@ export const router = express.Router();
 
 // Create a new user
 
-router.post("/users", async (req, res) => {
+router.post("/api/users", async (req, res) => {
     try
     {
         if (!CheckParams(req.body, ["password", "email"]))
@@ -35,7 +35,7 @@ router.post("/users", async (req, res) => {
 
 // Login a user
 
-router.post("/users/login", async (req, res) => {
+router.post("/api/users/login", async (req, res) => {
     try
     {
         const session_token: string = req.headers.session_token as string;
@@ -60,21 +60,20 @@ router.post("/users/login", async (req, res) => {
                 return res.status(400).json({ message: "Invalid session token" });
             }
         }
-
-        const { email, password } = req.body;
     
-
         if (!CheckParams(req.body, ["password", "email"]))
         {
             return res.status(400).json({ message: "Missing parameters" });
         }
+
+        const { email, password } = req.body;
 
         // Find hashed password in database
         const user: QueryResult = await pool.query("SELECT * FROM users WHERE email = $1;", [email]);
 
         if (user.rows.length === 0)
         {
-            return res.status(400).json({ msg: "The email address " + email + " is not associated with any account. Double-check your email address and try again." });
+            return res.status(400).json({ message: "The email address " + email + " is not associated with any account. Double-check your email address and try again." });
         }
 
         // Compare hashed password with password from request
@@ -83,7 +82,7 @@ router.post("/users/login", async (req, res) => {
 
         if (!isMatch)
         {
-            return res.status(400).json({ msg: "Invalid credentials" });
+            return res.status(400).json({ message: "Invalid credentials" });
         }
 
         // Create and assign a token
@@ -91,11 +90,11 @@ router.post("/users/login", async (req, res) => {
         const token = jwt.sign({ id }, secret, { expiresIn: 86400 });
 
         // Add token to database
-        const user_infos: QueryResult = await pool.query("UPDATE users SET session_token = $1 WHERE id = $2 RETURNING (email, password);", [token, id]);
-        return res.status(200).json({ token, user: user_infos.rows[0] });
+        const user_infos: QueryResult = await pool.query("UPDATE users SET session_token = $1 WHERE id = $2 RETURNING (id, email, created);", [token, id]);
+        return res.status(200).json({ message: "User logged in successfully", token, user: user_infos.rows[0] });
     }
     catch (error: any)
     {
-        return res.status(400).json({ msg: error.message });
+        return res.status(400).json({ message: error.message });
     }
 });

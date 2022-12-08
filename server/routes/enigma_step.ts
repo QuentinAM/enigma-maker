@@ -6,7 +6,7 @@ import { QueryResult } from "pg";
 
 export const router = express.Router();
 
-router.post("/enigma/:id/step", async (req, res) => {
+router.post("/api/enigma/:id/step", async (req, res) => {
     try
     {
         const session_token: string = req.headers.session_token as string;
@@ -60,7 +60,7 @@ router.post("/enigma/:id/step", async (req, res) => {
     }
 });
 
-router.put("/enigma/:enigma_id/step/:step_id", async (req, res) => {
+router.put("/api/enigma/:enigma_id/step/:step_id", async (req, res) => {
     try
     {
         const session_token: string = req.headers.session_token as string;
@@ -107,7 +107,7 @@ router.put("/enigma/:enigma_id/step/:step_id", async (req, res) => {
     }
 });
 
-router.delete("/enigma/:enigma_id/step/:step_id", async (req, res) => {
+router.delete("/api/enigma/:enigma_id/step/:step_id", async (req, res) => {
     try
     {
         const session_token: string = req.headers.session_token as string;

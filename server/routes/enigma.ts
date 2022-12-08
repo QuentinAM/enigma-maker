@@ -6,7 +6,7 @@ import { QueryResult } from "pg";
 
 export const router = express.Router();
 
-router.get("/enigma/:id", async (req, res) => {
+router.get("/api/enigma/:id", async (req, res) => {
     try
     {
         const enigma: QueryResult = await pool.query("SELECT * FROM enigma WHERE id = $1;", [req.params.id]);
@@ -22,7 +22,7 @@ router.get("/enigma/:id", async (req, res) => {
     }
 });
 
-router.get("/enigma/me", async (req, res) => {
+router.get("/api/enigma/me", async (req, res) => {
     try
     {
         // Check in headers
@@ -50,7 +50,7 @@ router.get("/enigma/me", async (req, res) => {
     }
 });
 
-router.post("/enigma", async (req, res) => {
+router.post("/api/enigma", async (req, res) => {
     try
     {
         const session_token: string = req.headers.session_token as string;
@@ -93,7 +93,7 @@ router.post("/enigma", async (req, res) => {
     }
 });
 
-router.put("/enigma/:id", async (req, res) => {
+router.put("/api/enigma/:id", async (req, res) => {
     try
     {
         const session_token: string = req.headers.session_token as string;
