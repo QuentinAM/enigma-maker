@@ -29,3 +29,25 @@ export async function LoginEmailPassword(email: string, password: string): Promi
     }
     return json;
 }
+
+export async function LoginToken(token: string)
+{
+    // Fetch the user from the database
+    const res: Response = await fetch(`${API_URL}/api/users/login`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "session_token": token
+        }
+    });
+    const json: any = await res.json();
+    if (res.status === 200)
+    {
+        // Add user to store
+        const localUser: LocalUser = SqlRowToLocalUser(json.user.row);
+        user.set(localUser);
+        
+        return localUser;
+    }
+    return json;
+}

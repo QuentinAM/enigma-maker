@@ -1,21 +1,33 @@
 <script lang="ts">
-    import { LoginEmailPassword } from '$lib/utils/user';
+	import { goto } from '$app/navigation';
+    import { LoginEmailPassword, LoginToken } from '$lib/utils/user';
+	import { onMount } from 'svelte';
 
-    export let email: string;
-    export let password: string;
+    let email: string = '';
+    let password: string = '';
+    let error: string = '';
 
-    async function Login()
+    async function Login(loginFunction: Promise<any>)
     {
-        const res: any = await LoginEmailPassword(email, password);
+        const res: any = await loginFunction;
         if (res.message)
         {
-            alert(res.message);
+            error = res.message;
         }
         else
         {
-            alert("Login successful!");
+            goto('/dashboard');
         }
     }
+
+    onMount(() =>
+    {
+        const token: string | null = localStorage.getItem('token');
+        if (token)
+        {
+            Login(LoginToken(token));
+        }
+    });
 
 </script>
 
@@ -31,19 +43,21 @@
                     <p class="label">
                     <span class="label-text">Email</span>
                     </p>
-                    <input bind:value={email} type="text" placeholder="..." class="input input-bordered" />
+                    <input on:change={() => error = ''} bind:value={email} type="text" placeholder="..." class="input input-bordered" />
                 </div>
                 <div class="form-control">
                     <p class="label">
                         <span class="label-text">Password</span>
                     </p>
-                    <input bind:value={password} type="password" placeholder="..." class="input input-bordered" />
+                    <input on:change={() => error = ''} bind:value={password} type="password" placeholder="..." class="input input-bordered" />
                 </div>
                 <label class="label">
+                    <input class="hidden"/>
                     <a href="/recover" class="label-text-alt link link-hover">Forgot password?</a>
-                  </label>
+                </label>
+                <p class="text-error text-sm font-semibold">{error}</p>
                 <div class="form-control mt-6">
-                    <button on:click={Login} class="btn btn-primary">Login</button>
+                    <button on:click={() => Login(LoginEmailPassword(email, password))} class="btn btn-primary">Login</button>
                 </div>
             </div>
         </div>

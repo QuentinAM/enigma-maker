@@ -13,8 +13,8 @@ CREATE TABLE enigma(
     owner_id    INTEGER      NOT NULL,
     title       VARCHAR(255) NOT NULL,
     description TEXT         ,
-    start_date  DATE         NOT NULL,
-    end_date    DATE         NOT NULL,
+    start_date  VARCHAR(32)  NOT NULL,
+    end_date    VARCHAR(32)  NOT NULL,
     created     TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
     FOREIGN KEY (owner_id) REFERENCES users(id)

@@ -6,22 +6,6 @@ import { QueryResult } from "pg";
 
 export const router = express.Router();
 
-router.get("/api/enigma/:id", async (req, res) => {
-    try
-    {
-        const enigma: QueryResult = await pool.query("SELECT * FROM enigma WHERE id = $1;", [req.params.id]);
-        if (enigma.rowCount === 0)
-        {
-            return res.status(400).json({ message: "Enigma doesn't exist" });
-        }
-        return res.status(200).json({ enigma: enigma.rows[0] });
-    }
-    catch (error: any)
-    {
-        return res.status(400).json({ msg: error.message });
-    }
-});
-
 router.get("/api/enigma/me", async (req, res) => {
     try
     {
@@ -46,7 +30,23 @@ router.get("/api/enigma/me", async (req, res) => {
     }
     catch (error: any)
     {
-        return res.status(400).json({ msg: error.message });
+        return res.status(400).json({ message: error.message });
+    }
+});
+
+router.get("/api/enigma/:id", async (req, res) => {
+    try
+    {
+        const enigma: QueryResult = await pool.query("SELECT * FROM enigma WHERE id = $1;", [req.params.id]);
+        if (enigma.rowCount === 0)
+        {
+            return res.status(400).json({ message: "Enigma doesn't exist" });
+        }
+        return res.status(200).json({ enigma: enigma.rows[0] });
+    }
+    catch (error: any)
+    {
+        return res.status(400).json({ message: error.message });
     }
 });
 
@@ -74,13 +74,13 @@ router.post("/api/enigma", async (req, res) => {
             
             if (enigmas.rowCount >= 10)
             {
-                if (false) // User is not premium
+                if (true) // User is not premium
                 {
                     return res.status(400).json({ message: "You can't create more than 10 enigmas" });
                 }
             }
             const query_res: QueryResult = await pool.query("INSERT INTO enigma (id, owner_id, title, start_date, end_date) VALUES (DEFAULT, $1, $2, $3, $4) RETURNING id;", [user.id, enigma_title, start_date, end_date]);
-            return res.status(200).json({ message: "Enigma created successfully", enigma_id: query_res.rows[0].id });
+            return res.status(200).json({ enigma_id: query_res.rows[0].id });
         }
         else
         {
@@ -89,7 +89,7 @@ router.post("/api/enigma", async (req, res) => {
     }
     catch (error: any)
     {
-        return res.status(400).json({ msg: error.message });
+        return res.status(400).json({ message: error.message });
     }
 });
 
@@ -130,6 +130,34 @@ router.put("/api/enigma/:id", async (req, res) => {
     }
     catch (error: any)
     {
-        return res.status(400).json({ msg: error.message });
+        return res.status(400).json({ message: error.message });
+    }
+});
+
+router.delete("/api/enigma/:id", async (req, res) => {
+    try
+    {
+        const session_token: string = req.headers.session_token as string;
+        if (!session_token)
+        {
+            return res.status(400).json({ message: "Missing session token" });
+        }
+
+        const user: any = CheckSessionToken(session_token);
+
+        // Check if modyfing enigma is owned by user
+        const enigma: QueryResult = await pool.query("SELECT owner_id FROM enigma WHERE id = $1 AND owner_id = $2;", [req.params.id, user.id]);
+        if (enigma.rowCount === 0)
+        {
+            return res.status(400).json({ message: "Enigma doesn't exist or you don't have access to it" });
+        }
+
+        // Delete enigma
+        await pool.query("DELETE FROM enigma WHERE id = $1;", [req.params.id]);
+        return res.status(200).json({ });
+    }
+    catch (error: any)
+    {
+        return res.status(400).json({ message: error.message });
     }
 });
