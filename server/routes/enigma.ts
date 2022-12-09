@@ -37,12 +37,19 @@ router.get("/api/enigma/me", async (req, res) => {
 router.get("/api/enigma/:id", async (req, res) => {
     try
     {
-        const enigma: QueryResult = await pool.query("SELECT * FROM enigma WHERE id = $1;", [req.params.id]);
-        if (enigma.rowCount === 0)
+        const request_res: QueryResult = await pool.query("SELECT * FROM enigma WHERE id = $1;", [req.params.id]);
+        if (request_res.rowCount === 0)
         {
             return res.status(400).json({ message: "Enigma doesn't exist" });
         }
-        return res.status(200).json({ enigma: enigma.rows[0] });
+
+        const enigma: any = request_res.rows[0];
+
+        // Get all enigma_steps
+        const enigma_steps: QueryResult = await pool.query("SELECT * FROM enigma_step WHERE enigma_id = $1;", [enigma.id]);
+        enigma.enigma_steps = enigma_steps.rows;
+
+        return res.status(200).json({ enigma: enigma });
     }
     catch (error: any)
     {

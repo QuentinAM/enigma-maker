@@ -1,3 +1,4 @@
+import type { assets } from "$app/paths";
 import { API_URL } from "$lib/const";
 
 export async function GetMyEnigma(token: string): Promise<any>
@@ -7,6 +8,18 @@ export async function GetMyEnigma(token: string): Promise<any>
         headers: {
             "Content-Type": "application/json",
             "session_token": token
+        }
+    });
+    const json: any = await res.json();
+    return json;
+}
+
+export async function GetEnigma(id: string): Promise<any>
+{
+    const res: Response = await fetch(`${API_URL}/api/enigma/${id}`, {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json"
         }
     });
     const json: any = await res.json();

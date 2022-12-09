@@ -15,7 +15,7 @@ router.post("/api/enigma/:id/step", async (req, res) => {
             return res.status(400).json({ message: "Missing session token" });
         }
 
-        if (!CheckParams(req.body, ["enigma_id", "index", "title"]))
+        if (!CheckParams(req.body, ["index", "title"]))
         {
             return res.status(400).json({ message: "Missing parameters" });
         }
@@ -23,7 +23,8 @@ router.post("/api/enigma/:id/step", async (req, res) => {
         const user: any = CheckSessionToken(session_token);
         if (user)
         {
-            const { enigma_id, index, title } = req.body;
+            const enigma_id: string = req.params.id;
+            const { index, title } = req.body;
          
             // Check if enigma exists and if it belongs to the user
             const enigma: QueryResult = await pool.query("SELECT * FROM enigma WHERE id = $1 AND owner_id = $2;", [enigma_id, user.id]);
@@ -44,10 +45,10 @@ router.post("/api/enigma/:id/step", async (req, res) => {
                 INSERT INTO enigma_step
                 (id, enigma_id, index, title)
                 VALUES (DEFAULT, $1, $2, $3)
-                RETURNING id;
+                RETURNING *;
             `, [enigma_id, index, title]);
         
-            return res.status(200).json({ step_id: new_step.rows[0].id });
+            return res.status(200).json({ step: new_step.rows[0] });
         }
         else
         {
@@ -56,7 +57,7 @@ router.post("/api/enigma/:id/step", async (req, res) => {
     }
     catch (error: any)
     {
-        return res.status(400).json({ msg: error.message });
+        return res.status(400).json({ message: error.message });
     }
 });
 
@@ -94,7 +95,7 @@ router.put("/api/enigma/:enigma_id/step/:step_id", async (req, res) => {
                     case_sensitive = COALESCE($7, case_sensitive)
                 WHERE id = $8;
             `, [req.body.index ?? null, req.body.title ?? null, req.body.description ?? null, req.body.attempt_limit ?? null, req.body.time_refresh ?? null, req.body.solution ?? null, req.body.case_sensitive ?? null, step_id]);
-            return res.status(200).json({ message: "Step updated" });
+            return res.status(200).json({  });
         }
         else
         {
@@ -103,7 +104,7 @@ router.put("/api/enigma/:enigma_id/step/:step_id", async (req, res) => {
     }
     catch (error: any)
     {
-        return res.status(400).json({ msg: error.message });
+        return res.status(400).json({ message: error.message });
     }
 });
 
@@ -130,7 +131,7 @@ router.delete("/api/enigma/:enigma_id/step/:step_id", async (req, res) => {
 
             // Delete step
             await pool.query("DELETE FROM enigma_step WHERE id = $1;", [step_id]);
-            return res.status(200).json({ message: "Step deleted" });
+            return res.status(200).json({  });
         }
         else
         {
@@ -139,6 +140,6 @@ router.delete("/api/enigma/:enigma_id/step/:step_id", async (req, res) => {
     }
     catch (error: any)
     {
-        return res.status(400).json({ msg: error.message });
+        return res.status(400).json({ message: error.message });
     }
 });

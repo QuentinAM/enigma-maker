@@ -19,6 +19,20 @@ export interface Enigma {
     start_date: string;
     end_date: string;
     created: string;
+    enigma_steps: any[] | null;
+}
+
+export interface EnigmaStep {
+    id: number;
+    enigma_id: number;
+    index: number;
+    title: string;
+    description: string;
+    attempt_limit: number;
+    time_refresh: number;
+    solution: string;
+    case_sensitive: boolean;
+    created: string;
 }
 
 export interface EnigmaToDelete {

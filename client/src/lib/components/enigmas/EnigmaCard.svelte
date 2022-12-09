@@ -9,16 +9,14 @@
     let status: string = '';
 
     onMount(() => {
-        const start_date: Date = new Date(enigma.start_date);
-        const end_date: Date = new Date(enigma.end_date);
-        const now: Date = new Date();
+        const now: string = new Date().toLocaleString();
 
         // Set status
-        if (now < start_date)
+        if (now < enigma.start_date)
         {
             status = 'Not started ⏳';
         }
-        else if (now > end_date)
+        else if (now > enigma.end_date)
         {
             status = 'Ended ✅';
         }
