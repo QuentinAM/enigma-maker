@@ -46,7 +46,7 @@ router.get("/api/enigma/:id", async (req, res) => {
         const enigma: any = request_res.rows[0];
 
         // Get all enigma_steps
-        const enigma_steps: QueryResult = await pool.query("SELECT * FROM enigma_step WHERE enigma_id = $1;", [enigma.id]);
+        const enigma_steps: QueryResult = await pool.query("SELECT * FROM enigma_step WHERE enigma_id = $1 ORDER BY index;", [enigma.id]);
         enigma.enigma_steps = enigma_steps.rows;
 
         return res.status(200).json({ enigma: enigma });

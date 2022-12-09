@@ -19,7 +19,7 @@ export interface Enigma {
     start_date: string;
     end_date: string;
     created: string;
-    enigma_steps: any[] | null;
+    enigma_steps: EnigmaStep[];
 }
 
 export interface EnigmaStep {

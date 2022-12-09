@@ -17,3 +17,20 @@ export function FormatDate(date: string): string
 
     return `${dayStr}/${monthStr}/${year} ${hoursStr}:${minutesStr}:${secondsStr}`;
 }
+
+export function FormatDescription(description: string): string | null
+{
+    if (description == null)
+    {
+        return null;
+    }
+
+    // Replace links with <a> tags
+    const regex = /((http|https):\/\/[^\s]+)/g;
+    const result = description.replace(regex, (url) => {
+        return `<a class="link text-blue-500" href="${url}" target="_blank">${url}</a>`;
+    });
+
+    // Replace new lines with <br> tags
+    return result.replace(/\n/g, "<br>");
+}
