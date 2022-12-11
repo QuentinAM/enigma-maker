@@ -22,7 +22,7 @@ app.use(function (req, res, next) {
     res.setHeader('Access-Control-Allow-Origin', 'http://localhost:5173');
 
     // Request methods you wish to allow
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
 
     // Request headers you wish to allow
     res.setHeader('Access-Control-Allow-Headers', '*');
@@ -33,7 +33,9 @@ app.use(function (req, res, next) {
 
 app.use(Routes.users_routes);
 app.use(Routes.enigma_routes);
+app.use(Routes.enigma_get_routes);
 app.use(Routes.enigma_step_routes);
+app.use(Routes.enigma_step_attempt_routes);
 
 app.listen(3000, () => {
     console.log('Server started on port 3000');

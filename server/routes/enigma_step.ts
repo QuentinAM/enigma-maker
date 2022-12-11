@@ -129,9 +129,20 @@ router.delete("/api/enigma/:enigma_id/step/:step_id", async (req, res) => {
                 return res.status(400).json({ message: "Enigma doesn't exist or doesn't belong to you" });
             }
 
+            // Update steps indexes
+            await pool.query(`
+                UPDATE enigma_step
+                SET index = index - 1
+                WHERE enigma_id = $1 AND index > (SELECT index FROM enigma_step WHERE id = $2);
+            `, [enigma_id, step_id]);
+
             // Delete step
             await pool.query("DELETE FROM enigma_step WHERE id = $1;", [step_id]);
-            return res.status(200).json({  });
+
+            // Get new steps
+            const steps: QueryResult = await pool.query("SELECT * FROM enigma_step WHERE enigma_id = $1 ORDER BY index;", [enigma_id]);
+
+            return res.status(200).json({ steps: steps.rows });
         }
         else
         {

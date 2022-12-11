@@ -6,7 +6,7 @@
 
 </script>
 
-<div on:click class="card w-full bg-base-100 shadow-xl shadow-black hover:cursor-pointer hover:bg-base-200">
+<div on:click class="card w-full bg-base-100 shadow-xl shadow-black hover:cursor-pointer hover:outline outline-black hover:bg-base-200">
     <div class="card-body p-5">
         <h2 class="card-title">{enigmaStep.index}{')'} {enigmaStep.title}</h2>
         <p class="italic">Created the {FormatDate(enigmaStep.created)}</p>

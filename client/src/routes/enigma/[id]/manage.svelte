@@ -10,15 +10,18 @@
     import EnigmaStepCard from "$lib/components/enigmas/EnigmaStepCard.svelte";
     import Spinner from '$lib/assets/spinner.png';
 	import type { Enigma, EnigmaStep, LocalUser } from "$lib/type";
-	import { CreateEnigmaStep, UpdateEnigmaStep } from "$lib/utils/enigma_step";
+	import { CreateEnigmaStep, DeleteEnigmaStep, UpdateEnigmaStep } from "$lib/utils/enigma_step";
 
     const enigma_id: string = $page.params.id;
     let loading: boolean = true;
     let enigma: Enigma;
+    
     let status: string = '';
     let status_message: string = '';
+
     let enigma_error: string = '';
     let enigma_step_title: string = '';
+    
     let modifying_step: boolean = false;
     let modifying_step_obj: EnigmaStep;
     let selected_step: EnigmaStep;
@@ -81,6 +84,28 @@
         }
     }
 
+    async function DeleteEnigmaStepForm()
+    {
+        const token: string | null = localStorage.getItem('token');
+        if (token)
+        {
+            const res: any = await DeleteEnigmaStep(selected_step, token);
+            if (res.message)
+            {
+                enigma_error = res.message;
+            }
+            else
+            {
+                // Update enigma list
+                enigma.enigma_steps = res.steps;
+            }
+        }
+        else
+        {
+            goto('/login');
+        }
+    }
+
     onMount(async () => {
         const token: string | null = localStorage.getItem('token');
         if (!token)
@@ -103,7 +128,6 @@
             {
                 goto('/');
             }
-            console.log(res.enigma);
             enigma = res.enigma as Enigma;
             
             user.subscribe((val: LocalUser) => {
@@ -153,6 +177,20 @@
     </label>
 </label>
 
+<input type="checkbox" id="delete-enigma-step-modal" class="modal-toggle" />
+<label for="delete-enigma-step-modal" class="modal">
+    <div class="modal-box">
+        <h3 class="font-bold text-lg">Delete an enigma step ?</h3>
+        {#if selected_step && enigma}
+            <p class="py-4">Are you sure you want to delete {selected_step.index}/{enigma.enigma_steps.length} {selected_step.title} ?</p>
+        {/if}
+        <div class="modal-action">
+            <label for="delete-enigma-step-modal" class="btn">No</label>
+            <label on:click={DeleteEnigmaStepForm} for="delete-enigma-step-modal" class="btn btn-error">Yes</label>
+        </div>
+    </div>
+</label>
+
 <div class="min-h-screen bg-base-200 flex">
 	<div class="w-full mx-10 my-3">
         {#if loading}
@@ -183,10 +221,11 @@
                         </div>
                     </div>
                 </div>
+                <div class="divider divider-vertical"></div>
                 <div class="flex flex-row h-[30rem]">
                     <div class="w-[25rem]">
                         <p class="text-xl font-semibold">Enigmas <label for="create-enigma-step-modal" class="text-lg hover:cursor-pointer">➕</label></p>
-                        <div class="overflow-y-auto space-y-4 mt-3 h-[90%]">
+                        <div class="overflow-y-auto space-y-4 py-3 px-4 h-[90%]">
                             {#if enigma.enigma_steps}
                                 {#each enigma.enigma_steps as enigmaStep}
                                     <EnigmaStepCard on:click={() => {
@@ -201,49 +240,54 @@
                     <div class="divider divider-horizontal"></div>
                     <div class="h-full w-full overflow-y-auto relative">
                         {#if modifying_step}
-                            <div class="form-control">
-                                <p class="label">
-                                <span class="label-text">Title</span>
-                                </p>
-                                <input bind:value={modifying_step_obj.title} type="text" placeholder="..." class="input input-bordered" />
-                            </div>
-                            <div class="form-control">
-                                <label class="label">
-                                    <input class="hidden"/>
-                                    <span class="label-text">Description</span>
-                                </label> 
-                                <textarea bind:value={modifying_step_obj.description} class="textarea textarea-bordered h-24" placeholder="..."></textarea>
-                            </div>
-                            <div class="form-control">
-                                <p class="label">
-                                <span class="label-text">Solution</span>
-                                </p>
-                                <input bind:value={modifying_step_obj.solution} type="text" placeholder="..." class="input input-bordered" />
-                            </div>
-                            <div class="form-control">
-                                <label class="label cursor-pointer">
-                                    <span class="label-text">Case sensitive</span> 
-                                    <input type="checkbox" class="toggle" bind:checked={modifying_step_obj.case_sensitive}/>
-                                </label>
-                            </div>
-                            <div class="flex flex-row w-full space-x-3">
-                                <div class="form-control w-1/2">
+                            <div transition:slide>
+                                <div class="form-control">
                                     <p class="label">
-                                    <span class="label-text">Attempt limit</span>
+                                    <span class="label-text">Title</span>
                                     </p>
-                                    <input bind:value={modifying_step_obj.attempt_limit} min="0" type="number" placeholder="..." class="input input-bordered" />
+                                    <input bind:value={modifying_step_obj.title} type="text" placeholder="..." class="input input-bordered" />
                                 </div>
-                                <div class="form-control w-1/2">
+                                <div class="form-control">
+                                    <label class="label">
+                                        <input class="hidden"/>
+                                        <span class="label-text">Description</span>
+                                    </label> 
+                                    <textarea bind:value={modifying_step_obj.description} class="textarea textarea-bordered h-24" placeholder="..."></textarea>
+                                </div>
+                                <div class="form-control">
                                     <p class="label">
-                                    <span class="label-text">Time between guess</span>
+                                    <span class="label-text">Solution</span>
                                     </p>
-                                    <input bind:value={modifying_step_obj.time_refresh} min="0" type="number" placeholder="..." class="input input-bordered" />
+                                    <input bind:value={modifying_step_obj.solution} type="text" placeholder="..." class="input input-bordered" />
                                 </div>
+                                <div class="form-control">
+                                    <label class="label cursor-pointer">
+                                        <span class="label-text">Case sensitive</span> 
+                                        <input type="checkbox" class="toggle" bind:checked={modifying_step_obj.case_sensitive}/>
+                                    </label>
+                                </div>
+                                <div class="flex flex-row w-full space-x-3">
+                                    <div class="form-control w-1/2">
+                                        <p class="label">
+                                        <span class="label-text">Attempt limit</span>
+                                        </p>
+                                        <input bind:value={modifying_step_obj.attempt_limit} min="0" type="number" placeholder="..." class="input input-bordered" />
+                                    </div>
+                                    <div class="form-control w-1/2">
+                                        <p class="label">
+                                        <span class="label-text">Time between guess</span>
+                                        </p>
+                                        <input bind:value={modifying_step_obj.time_refresh} min="0" type="number" placeholder="..." class="input input-bordered" />
+                                    </div>
+                                </div>
+                                <button on:click={UpdateEnigmaForm} class="btn btn-success mt-2 w-full">Save changes</button>
                             </div>
-                            <button on:click={UpdateEnigmaForm} class="btn btn-success mt-2 w-full">Save changes</button>
                         {:else}
                             {#if selected_step}
-                                <button on:click={() => modifying_step = true} class="btn absolute top-0 right-0">Edit</button>
+                                <div class="absolute top-0 right-0 flex space-x-2">
+                                    <button on:click={() => modifying_step = true} class="btn">Edit</button>
+                                    <label for="delete-enigma-step-modal" class="btn btn-error">Delete</label>
+                                </div>
                                 <p class="font-semibold text-xl">{selected_step.index}/{enigma.enigma_steps.length} - {selected_step.title}</p>
                                 <p class="italic text-md">Created the {FormatDate(selected_step.created)}</p>
                                 <p class="text-lg mt-3 whitespace-pre-line">{@html FormatDescription(selected_step.description) ?? 'No description...'}</p>

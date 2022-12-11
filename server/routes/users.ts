@@ -89,8 +89,8 @@ router.post("/api/users/login", async (req, res) => {
         const id: number = user.rows[0].id;
         const token = jwt.sign({ id }, secret, { expiresIn: 86400 });
 
-        // Add token to database
-        const user_infos: QueryResult = await pool.query("UPDATE users SET session_token = $1 WHERE id = $2 RETURNING (id, email, created);", [token, id]);
+        // Get user infos
+        const user_infos: QueryResult = await RetrieveUserInfos(id);
         return res.status(200).json({ message: "User logged in successfully", token, user: user_infos.rows[0] });
     }
     catch (error: any)

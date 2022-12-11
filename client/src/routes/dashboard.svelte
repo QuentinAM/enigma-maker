@@ -5,7 +5,7 @@
     import { user, enigmaToDelete } from "$lib/utils/store";
 	import { LoginToken } from "$lib/utils/user";
 	import { onMount } from "svelte";
-    import { GetMyEnigma, CreateEnigma, DeleteEnigma } from "$lib/utils/enigma";
+    import { GetEnigmaOwn, CreateEnigma, DeleteEnigma } from "$lib/utils/enigma";
     import EnigmaCard from "$lib/components/enigmas/EnigmaCard.svelte";
     import type { Enigma } from "$lib/type";
 
@@ -101,7 +101,7 @@
                 }
             }
 
-            const res: any = await GetMyEnigma(token);
+            const res: any = await GetEnigmaOwn(token);
             enigmas = res.enigmas;
         }
     });

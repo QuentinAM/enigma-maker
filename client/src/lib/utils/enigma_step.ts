@@ -41,9 +41,9 @@ export async function UpdateEnigmaStep(step: EnigmaStep, token: string): Promise
     return json;
 }
 
-export async function DeleteEnigma(token: string, id: number)
+export async function DeleteEnigmaStep(step: EnigmaStep, token: string)
 {
-    const res: Response = await fetch(`${API_URL}/api/enigma/${id}`, {
+    const res: Response = await fetch(`${API_URL}/api/enigma/${step.enigma_id}/step/${step.id}`, {
         method: "DELETE",
         headers: {
             "Content-Type": "application/json",
