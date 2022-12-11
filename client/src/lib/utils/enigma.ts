@@ -69,7 +69,7 @@ export async function DeleteEnigma(token: string, id: number)
     return json;
 }
 
-export async function UpdateEnigma(token: string, id: number, enigma_title: string, description: string, start_date: string, end_date: string)
+export async function UpdateEnigma(token: string, id: number, enigma_title: string, description: string, start_date: string, end_date: string, is_public: boolean)
 {
     const res: Response = await fetch(`${API_URL}/api/enigma/${id}`, {
         method: "PUT",
@@ -81,8 +81,35 @@ export async function UpdateEnigma(token: string, id: number, enigma_title: stri
             title: enigma_title,
             description,
             start_date,
-            end_date
+            end_date,
+            is_public: is_public
         })
+    });
+    const json: any = await res.json();
+    return json;
+}
+
+export async function GetEnigmaAttempts(id: number, token: string): Promise<any>
+{
+    const res: Response = await fetch(`${API_URL}/api/enigma/${id}/attempts`, {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            "session_token": token
+        }
+    });
+    const json: any = await res.json();
+    return json;
+}
+
+export async function JoinEnigma(id: number, token: string): Promise<any>
+{
+    const res: Response = await fetch(`${API_URL}/api/enigma/${id}/assign`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "session_token": token
+        }
     });
     const json: any = await res.json();
     return json;

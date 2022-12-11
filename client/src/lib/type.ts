@@ -39,3 +39,14 @@ export interface EnigmaToDelete {
     id: number;
     title: string;
 }
+
+export interface EnigmaAttempt {
+    id: number;
+    enigma_step_id: number;
+    user_id: number;
+    attempt: string;
+    created: string;
+    email: string;
+    index: number;
+    success: boolean;
+}

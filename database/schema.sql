@@ -15,6 +15,7 @@ CREATE TABLE enigma(
     start_date  VARCHAR(32)  NOT NULL,
     end_date    VARCHAR(32)  NOT NULL,
     created     TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+    public      BOOLEAN      DEFAULT FALSE,
     PRIMARY KEY (id),
     FOREIGN KEY (owner_id) REFERENCES users(id)
 );
@@ -49,10 +50,11 @@ CREATE TABLE enigma_assignment(
     id                 SERIAL       NOT NULL,
     enigma_id          INTEGER      NOT NULL,
     user_id            INTEGER      NOT NULL,
-    current_step_index INTEGER      NOT NULL, -- 0 = not started, 1 = first step, etc.
+    current_step_index INTEGER      DEFAULT 0, -- 0 = not started, 1 = first step, etc.
     completed          BOOLEAN      DEFAULT FALSE,
     created            TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
     FOREIGN KEY (enigma_id) REFERENCES enigma(id),
-    FOREIGN KEY (user_id) REFERENCES users(id)
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    UNIQUE (enigma_id, user_id)
 );

@@ -48,7 +48,7 @@ router.post("/api/enigma_step_attempt/:step_id", async (req, res) => {
             }
 
             // Check if the step is the next step
-            if (next_step.rows[0].id !== step_id)
+            if (next_step.rows[0].id != step_id)
             {
                 return res.status(400).json({ message: "Not the next step" });
             }
@@ -77,7 +77,7 @@ router.post("/api/enigma_step_attempt/:step_id", async (req, res) => {
             if (last_attempt.rowCount > 0)
             {
                 // Check if the user can answer again by checking how much attempt he made
-                if (last_attempt.rowCount >= step.rows[0].attempt_limit)
+                if (last_attempt.rowCount >= step.rows[0].attempt_limit && step.rows[0].attempt_limit !== 0)
                 {
                     return res.status(400).json({ message: "You can't answer again, you reached the attempt limit" });
                 }
@@ -98,7 +98,7 @@ router.post("/api/enigma_step_attempt/:step_id", async (req, res) => {
 
             // Check if the attempt is correct
             const case_sensitive: boolean = step.rows[0].case_sensitive;
-            if ((case_sensitive && attempt === step.rows[0].answer) || (!case_sensitive && attempt.toLowerCase() === step.rows[0].answer.toLowerCase()))
+            if ((case_sensitive && attempt === step.rows[0].solution) || (!case_sensitive && attempt.toLowerCase() === step.rows[0].solution.toLowerCase()))
             {
                 // Update the current step index
                 enigma_assignment = await pool.query("UPDATE enigma_assignment SET current_step_index = $1 WHERE user_id = $2 AND enigma_id = $3 RETURNING *;", [enigma_assignment.rows[0].current_step_index + 1, user.id, step.rows[0].enigma_id]);
@@ -109,7 +109,7 @@ router.post("/api/enigma_step_attempt/:step_id", async (req, res) => {
                 {
                     // Update the enigma assignment
                     const final_res: QueryResult = await pool.query("UPDATE enigma_assignment SET completed = true WHERE user_id = $1 AND enigma_id = $2 RETURNING *;", [user.id, step.rows[0].enigma_id]);
-                
+
                     // We are done
                     return res.status(200).json({ res: final_res.rows[0] });
                 }
@@ -123,11 +123,8 @@ router.post("/api/enigma_step_attempt/:step_id", async (req, res) => {
             {
                 // Check if the user has more attempts
                 const attempts: QueryResult = await pool.query("SELECT * FROM enigma_step_attempt WHERE enigma_step_id = $1 AND user_id = $2;", [step_id, user.id]);
-                if (attempts.rowCount >= step.rows[0].attempt_limit)
+                if (attempts.rowCount >= step.rows[0].attempt_limit && step.rows[0].attempt_limit !== 0)
                 {
-                    // Update the enigma assignment
-                    await pool.query("UPDATE enigma_assignment SET finished = true WHERE user_id = $1 AND enigma_id = $2;", [user.id, step.rows[0].enigma_id]);
-                    
                     // No more attempts
                     return res.status(200).json({ message: "You reached the attempt limit" });
                 }
