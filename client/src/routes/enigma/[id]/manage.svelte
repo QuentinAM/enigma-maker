@@ -5,14 +5,15 @@
 	import { LoginToken } from "$lib/utils/user";
     import { page } from '$app/stores';
 	import { onMount } from "svelte";
-    import { GetEnigma, GetEnigmaAttempts, UpdateEnigma } from "$lib/utils/enigma";
+    import { GetEnigma, GetEnigmaAttempts, GetEnigmaUsers, UpdateEnigma } from "$lib/utils/enigma";
     import { FormatDate, FormatDescription, ParseDate } from "$lib/utils";
+	import type { EnigmaAttempt, Enigma, EnigmaStep, LocalUser, EnigmaAssignment } from "$lib/type";
+	import { CreateEnigmaStep, DeleteEnigmaStep, UpdateEnigmaStep } from "$lib/utils/enigma_step";
+	import { DateInput } from "date-picker-svelte";
+	import EnigmaUsersTable from "$lib/components/enigmas/EnigmaUsersTable.svelte";
     import EnigmaStepCard from "$lib/components/enigmas/EnigmaStepCard.svelte";
     import EnigmaAttemptTable from "$lib/components/enigmas/EnigmaAttemptTable.svelte";
     import Spinner from '$lib/assets/spinner.png';
-	import type { EnigmaAttempt, Enigma, EnigmaStep, LocalUser } from "$lib/type";
-	import { CreateEnigmaStep, DeleteEnigmaStep, UpdateEnigmaStep } from "$lib/utils/enigma_step";
-	import { DateInput } from "date-picker-svelte";
 
     const enigma_id: string = $page.params.id;
 
@@ -39,7 +40,12 @@
     // Data
     let window_selected: string = 'enigmas';
     let enigma_attempts: EnigmaAttempt[] = [];
+    let enigma_users: EnigmaAssignment[] = [];
 
+    // Clipboard
+    let clipboard_classes: string = 'tooltip';
+    let clipboard_text: string = 'Copy to clipboard';
+ 
     async function CreateEnigmaStepForm()
     {
         if (enigma_step_title != '')
@@ -146,6 +152,13 @@
         }
     }
 
+    const copyToClipBoard = (text: string) => {
+		navigator.clipboard.writeText(text);
+		// Update tooltip
+		clipboard_classes += ' tooltip-success';
+        clipboard_text = 'Copied to clipboard';
+	};
+
     onMount(async () => {
         const token: string | null = localStorage.getItem('token');
         if (!token)
@@ -159,14 +172,14 @@
                 const res: any = await LoginToken(token);
                 if (res.message)
                 {
-                    goto('/login');
+                    return goto('/login');
                 }
             }
 
-            const res: any = await GetEnigma(enigma_id);
+            const res: any = await GetEnigma(enigma_id, token);
             if (res.message)
             {
-                goto('/');
+                return goto('/');
             }
             enigma = res.enigma as Enigma;
             modifying_obj = enigma;
@@ -212,6 +225,18 @@
                 {
                     enigma_attempts = res.enigma_step_attempts as EnigmaAttempt[];
                 }
+            }
+
+            // Get enigma users
+            const res2: any = await GetEnigmaUsers(enigma.id, token);
+            console.log(res2);
+            if (res2.message)
+            {
+                enigma_error = res2.message;
+            }
+            else
+            {
+                enigma_users = res2.users as EnigmaAssignment[];
             }
 
             loading = false;
@@ -304,7 +329,17 @@
                             {#if $user}
                                 <p>By {$user.email}</p>
                             {/if}
-                            <p>Id: {enigma.id}</p>
+                            <div>
+                                {enigma.public ? '🔓' : '🔒'} {enigma.public ? 'Public' : 'Private'}
+                            </div>
+                            <div>
+                                Invitation :
+                                <div class={clipboard_classes} data-tip={clipboard_text}>
+                                    <button on:click={() => copyToClipBoard(`${window.location.origin}/enigma/${enigma.id}/join`)} class="hover:underline text-blue-500">
+                                        <i class="fa-solid fa-link"></i>
+                                    </button>
+                                </div>
+                            </div>
                             {#if enigma_error}
                                 <p class="text-error font-semibold">{enigma_error}</p>
                             {/if}
@@ -322,13 +357,12 @@
                     </div>
                 </div>
                 <div class="divider divider-vertical"></div>
-                {#if enigma_started}
                 <select bind:value={window_selected} class="select select-primary w-full">
                     <option value="enigmas">Enigmas</option>
-                    <option value="attempts">Attempts</option>
+                    <option value="users">Users enroled</option>
+                    <option disabled={!enigma_started} value="attempts">Attempts</option>
                 </select>
-                {/if}
-                {#if !enigma_started || (enigma_started && window_selected == 'enigmas')}
+                {#if window_selected == 'enigmas'}
                     <div class="flex flex-row h-[30rem]">
                         <div class="w-[25rem]">
                             <p class="text-xl font-semibold">Enigmas 
@@ -417,9 +451,14 @@
                             {/if}
                         </div>
                     </div>
-                {:else if enigma_started && window_selected == 'attempts'}
+                {:else if window_selected == 'attempts'}
                     {#if enigma_started}
                         <EnigmaAttemptTable attempts={enigma_attempts} />
+                    {/if}
+
+                {:else if window_selected == 'users'}
+                    {#if enigma_users}
+                        <EnigmaUsersTable users={enigma_users} />
                     {/if}
                 {/if}
             </div>

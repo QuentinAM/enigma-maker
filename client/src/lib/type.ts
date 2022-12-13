@@ -20,6 +20,7 @@ export interface Enigma {
     end_date: string;
     created: string;
     enigma_steps: EnigmaStep[];
+    public: boolean;
 }
 
 export interface EnigmaStep {
@@ -49,4 +50,14 @@ export interface EnigmaAttempt {
     email: string;
     index: number;
     success: boolean;
+}
+
+export interface EnigmaAssignment {
+    id: number;
+    user_id: number;
+    email: string;
+    created: string;
+    current_step_index: number;
+    completed: boolean;	
+    enigma_id: number;
 }

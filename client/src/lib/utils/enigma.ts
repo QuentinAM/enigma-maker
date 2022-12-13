@@ -26,19 +26,33 @@ export async function GetMyEnigma(token: string): Promise<any>
     return json;
 }
 
-export async function GetEnigma(id: string): Promise<any>
+export async function GetEnigmaMyAttempts(id: string, token: string): Promise<any>
 {
-    const res: Response = await fetch(`${API_URL}/api/enigma/${id}`, {
+    const res: Response = await fetch(`${API_URL}/api/enigma/${id}/my_attempts`, {
         method: "GET",
         headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "session_token": token
         }
     });
     const json: any = await res.json();
     return json;
 }
 
-export async function CreateEnigma(enigma_title: string, start_date: string, end_date: string, token: string): Promise<any>
+export async function GetEnigma(id: string, token: string): Promise<any>
+{
+    const res: Response = await fetch(`${API_URL}/api/enigma/${id}`, {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            "session_token": token
+        }
+    });
+    const json: any = await res.json();
+    return json;
+}
+
+export async function CreateEnigma(enigma_title: string, start_date: string, end_date: string, is_public: boolean, token: string): Promise<any>
 {
     const res: Response = await fetch(`${API_URL}/api/enigma`, {
         method: "POST",
@@ -49,7 +63,8 @@ export async function CreateEnigma(enigma_title: string, start_date: string, end
         body: JSON.stringify({
             enigma_title,
             start_date,
-            end_date
+            end_date,
+            is_public
         })
     });
     const json: any = await res.json();
@@ -102,7 +117,20 @@ export async function GetEnigmaAttempts(id: number, token: string): Promise<any>
     return json;
 }
 
-export async function JoinEnigma(id: number, token: string): Promise<any>
+export async function GetEnigmaUsers(id: number, token: string): Promise<any>
+{
+    const res: Response = await fetch(`${API_URL}/api/enigma/${id}/users`, {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            "session_token": token
+        }
+    });
+    const json: any = await res.json();
+    return json;
+}
+
+export async function JoinEnigma(id: string, token: string): Promise<any>
 {
     const res: Response = await fetch(`${API_URL}/api/enigma/${id}/assign`, {
         method: "POST",

@@ -15,6 +15,7 @@
     // Create enigma
     let enigma_error: string = "";
     let enigma_title: string = "";
+    let enigma_public: boolean = false;
     let now = new Date();
     let enigma_start_date: Date;
     let enigma_end_date: Date ;
@@ -26,7 +27,7 @@
         {
             const start_date_str = enigma_start_date.toLocaleString();
             const end_date_str = enigma_end_date.toLocaleString();
-            const res: any = await CreateEnigma(enigma_title, start_date_str, end_date_str, token);
+            const res: any = await CreateEnigma(enigma_title, start_date_str, end_date_str, enigma_public, token);
             if (res.message)
             {
                 enigma_error = res.message;
@@ -42,7 +43,8 @@
                     enigma_steps: [],
                     start_date: start_date_str,
                     end_date: end_date_str,
-                    created: new Date().toLocaleString()
+                    created: new Date().toLocaleString(),
+                    public: enigma_public,
                 }
                 enigmas = [new_enigma, ...enigmas];
 
@@ -128,10 +130,12 @@
                     <img src="https://placeimg.com/192/192/people" alt="profile"/>
                 </div>
             </div>
-            <div class="flex flex-col justify-center items-center ml-5">
-                <p class="font-semibold text-base">{$user.email}</p>
-                <p class="text-sm text-primary ml-2">{$user.created}</p>
-            </div>
+            {#if $user}
+                <div class="flex flex-col justify-center items-center ml-5">
+                    <p class="font-semibold text-base">{$user.email}</p>
+                    <p class="text-sm text-primary ml-2">{$user.created}</p>
+                </div>
+            {/if}
         </div>
 
         <p class="font-semibold text-lg w-full">My enigmas <span on:click={() => creatingEnigma = !creatingEnigma} class="text-lg hover:cursor-pointer">➕</span></p>
@@ -159,6 +163,12 @@
                             <span class="label-text">End date</span>
                         </p>
                         <DateInput min={enigma_start_date} bind:value={enigma_end_date} />
+                    </div>
+                    <div class="form-control">
+                        <label class="label cursor-pointer">
+                            <span class="label-text">Public</span> 
+                            <input type="checkbox" class="toggle" bind:value={enigma_public} />
+                        </label>
                     </div>
                     <label class="label">
                         <input class="hidden"/>

@@ -15,12 +15,12 @@ router.post("/api/enigma", async (req, res) => {
             return res.status(400).json({ message: "Missing session token" });
         }
 
-        if (!CheckParams(req.body, ["enigma_title", "start_date", "end_date"]))
+        if (!CheckParams(req.body, ["enigma_title", "start_date", "end_date", "is_public"]))
         {
             return res.status(400).json({ message: "Missing parameters" });
         }
 
-        const { enigma_title, start_date, end_date } = req.body;
+        const { enigma_title, start_date, end_date, is_public } = req.body;
         
         const user: any = CheckSessionToken(session_token);
         if (user)
@@ -35,7 +35,7 @@ router.post("/api/enigma", async (req, res) => {
                     return res.status(400).json({ message: "You can't create more than 5 enigmas" });
                 }
             }
-            const query_res: QueryResult = await pool.query("INSERT INTO enigma (id, owner_id, title, start_date, end_date) VALUES (DEFAULT, $1, $2, $3, $4) RETURNING id;", [user.id, enigma_title, start_date, end_date]);
+            const query_res: QueryResult = await pool.query("INSERT INTO enigma (id, owner_id, title, start_date, end_date, public) VALUES (DEFAULT, $1, $2, $3, $4, $5) RETURNING id;", [user.id, enigma_title, start_date, end_date, is_public]);
             return res.status(200).json({ enigma_id: query_res.rows[0].id });
         }
         else

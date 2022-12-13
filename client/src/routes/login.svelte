@@ -1,7 +1,10 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { page } from '$app/stores';
     import { LoginEmailPassword, LoginToken } from '$lib/utils/user';
 	import { onMount } from 'svelte';
+
+    const redirect = $page.url.searchParams.get('redirect');
 
     let email: string = '';
     let password: string = '';
@@ -16,7 +19,7 @@
         }
         else
         {
-            goto('/dashboard');
+            goto(redirect ?? '/dashboard');
         }
     }
 

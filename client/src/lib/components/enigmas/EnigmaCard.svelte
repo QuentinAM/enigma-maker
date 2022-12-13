@@ -29,7 +29,7 @@
 </script>
 
 <div class="card card-side bg-base-100 shadow-lg w-full">
-    <figure><img src="https://placeimg.com/200/280" alt="Movie"/></figure>
+    <figure><img class="h-full" src="https://placeimg.com/200/280" alt="Movie"/></figure>
     <div class="card-body">
         <h2 class="card-title">{enigma.title}</h2>
         {#if enigma.description}
