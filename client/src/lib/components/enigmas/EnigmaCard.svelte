@@ -4,12 +4,15 @@
     import { enigmaToDelete } from "$lib/utils/store";
     import type { Enigma } from "$lib/type";
 	import { goto } from "$app/navigation";
+	import Countdown from "../Countdown.svelte";
 
     export let enigma: Enigma;
+    export let manage: boolean = false;
+    export let step_message: string = '';
+    const now: string = new Date().toLocaleString();
     let status: string = '';
 
     onMount(() => {
-        const now: string = new Date().toLocaleString();
 
         // Set status
         if (now < enigma.start_date)
@@ -33,20 +36,32 @@
     <div class="card-body">
         <h2 class="card-title">{enigma.title}</h2>
         {#if enigma.description}
-            <p>{enigma.description}</p>
+            <p class:truncate={!manage}>{enigma.description}</p>
         {/if}
         <p>Status : {status}</p>
-        <p class="italic">Created the {FormatDate(enigma.created)}</p>
-        <p>Start the <span class=" text-white">{enigma.start_date}</span></p>
-        <p>End the <span class=" text-white">{enigma.end_date}</span></p>
+        {#if now >= enigma.start_date}
+            <p>Completed: {enigma.completed ? '✅' : '❌'}</p>
+        {/if}
+        {#if step_message && !enigma.completed}
+            <p>Current step: {step_message}</p>
+        {/if}
+        {#if !manage}
+            {#if enigma.countdown_date && enigma.countdown_message}
+                <Countdown date={enigma.countdown_date} message={enigma.countdown_message} />
+            {/if}
+        {/if}
         <div class="card-actions justify-end">
-            <button on:click={() => goto(`/enigma/${enigma.id}/manage`)} class="btn btn-primary">Manage</button>
-            <label for="delete-modal" on:click={() => {
-                enigmaToDelete.set({
-                    id: enigma.id,
-                    title: enigma.title
-                });
-            }} class="btn btn-error">Delete</label>
+            {#if manage}
+                <button on:click={() => goto(`/enigma/${enigma.id}/manage`)} class="btn btn-primary">Manage</button>
+                <label for="delete-modal" on:click={() => {
+                    enigmaToDelete.set({
+                        id: enigma.id,
+                        title: enigma.title
+                    });
+                }} class="btn btn-error">Delete</label>
+            {:else}
+                <button on:click={() => goto(`/enigma/${enigma.id}`)} class="btn btn-primary">See</button>
+            {/if}
         </div>
     </div>
 </div>

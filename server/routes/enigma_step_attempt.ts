@@ -94,7 +94,7 @@ router.post("/api/enigma_step_attempt/:step_id", async (req, res) => {
             }
 
             // Add the attempt to the database
-            await pool.query("INSERT INTO enigma_step_attempt (id, enigma_step_id, user_id, attempt) VALUES (DEFAULT, $1, $2, $3);", [step_id, user.id, attempt]);
+            const enigma_step_attempt: QueryResult = await pool.query("INSERT INTO enigma_step_attempt (id, enigma_step_id, user_id, attempt) VALUES (DEFAULT, $1, $2, $3) RETURNING *;", [step_id, user.id, attempt]);
 
             // Check if the attempt is correct
             const case_sensitive: boolean = step.rows[0].case_sensitive;
@@ -111,12 +111,12 @@ router.post("/api/enigma_step_attempt/:step_id", async (req, res) => {
                     const final_res: QueryResult = await pool.query("UPDATE enigma_assignment SET completed = true WHERE user_id = $1 AND enigma_id = $2 RETURNING *;", [user.id, step.rows[0].enigma_id]);
 
                     // We are done
-                    return res.status(200).json({ res: final_res.rows[0] });
+                    return res.status(200).json({ res: final_res.rows[0], attempt: enigma_step_attempt.rows[0] });
                 }
                 else
                 {   
                     // Go to the next step
-                    return res.status(200).json({ res: enigma_assignment.rows[0] });
+                    return res.status(200).json({ res: enigma_assignment.rows[0], attempt: enigma_step_attempt.rows[0] });
                 }
             }
             else
@@ -126,7 +126,7 @@ router.post("/api/enigma_step_attempt/:step_id", async (req, res) => {
                 if (attempts.rowCount >= step.rows[0].attempt_limit && step.rows[0].attempt_limit !== 0)
                 {
                     // No more attempts
-                    return res.status(200).json({ message: "You reached the attempt limit" });
+                    return res.status(200).json({ message: "Wrong answer, you reached the attempt limit" });
                 }
                 else
                 {

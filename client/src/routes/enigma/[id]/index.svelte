@@ -2,7 +2,7 @@
 	import { goto } from "$app/navigation";
 	import { page } from "$app/stores";
 	import { FormatDate, FormatDescription, ParseDate } from "$lib/utils";
-	import { GetEnigma, GetEnigmaMyAttempts } from "$lib/utils/enigma";
+	import { AttemptEnigmaStep, GetEnigma, GetEnigmaMyAttempts } from "$lib/utils/enigma";
 	import { user } from "$lib/utils/store";
 	import { LoginToken } from "$lib/utils/user";
 	import { onMount } from "svelte";
@@ -13,14 +13,17 @@
 
     const enigma_id: string = $page.params.id;
     let enigma: Enigma;
-    let enigma_started: boolean = false;
+    let enigma_error: string = '';
+    let enigma_success_message: string = '';
+    let enigma_completed: boolean = false;
     let enigma_attempts: EnigmaAttempt[] = [];
     
     let loading: boolean = true;
 
     // Extra data
-    let next_step_index: number = 1;
+    let next_step_index: number = -1;
     let countdown_message: string = 'Enigma starts in';
+    let countdown_date: string = '';
 
     // Selected step
     let answer: string = '';
@@ -33,11 +36,61 @@
         return res != undefined;
     }
 
+    async function AttemptEnigmaStepForm()
+    {
+        if (answer == '')
+        {
+            return;
+        }
+
+        const token: string | null = localStorage.getItem('token');
+        if (token)
+        {
+            const res: any = await AttemptEnigmaStep(selected_step.id, answer, token);
+            console.log(res);
+            if (res.message)
+            {
+                enigma_error = res.message;
+            }
+            else
+            {
+                const new_attempt: EnigmaAttempt = {
+                    id: res.attempt.id,
+                    enigma_step_id: res.attempt.enigma_step_id,
+                    user_id: res.attempt.user_id,
+                    attempt: res.attempt.attempt,
+                    created: res.attempt.created,
+                    email: '',
+                    index: 0,
+                    success: true
+                };
+                enigma_attempts = [...enigma_attempts, new_attempt];
+                enigma.enigma_steps = enigma.enigma_steps; // To trigger update
+                selected_step_completed = true;
+                enigma_success_message = 'Correct answer!';
+                enigma_error = '';
+                answer = '';
+                next_step_index = selected_step.index + 1;
+
+                if (res.res.completed)
+                {
+                    // Finished enigma
+                    enigma_success_message = 'Congratulations! You finished the enigma!';
+                    enigma_completed = true;
+                }
+            }
+        }
+        else
+        {
+            goto('/login');
+        }
+    }
+
     onMount(async () => {
         const token: string | null = localStorage.getItem('token');
         if (!token)
         {
-            goto('/login');
+            return goto('/login');
         }
         else
         {
@@ -46,28 +99,28 @@
                 const res: any = await LoginToken(token);
                 if (res.message)
                 {
-                    return goto('/login');
+                    return goto(`/login?message=${res.message}`);
                 }
             }
 
             const res: any = await GetEnigma(enigma_id, token);
             if (res.message)
             {
-                return goto('/');
+                return goto(`/login?message=${res.message}`);
             }
             enigma = res.enigma as Enigma;
 
             // If no description or enignma_steps means not assigned to and not user
             if (!enigma.description || !enigma.enigma_steps)
             {
-                return goto('/');
+                return goto(`/login?message=${res.message}`);
             }
 
             // Get my attemps
             const res2: any = await GetEnigmaMyAttempts(enigma_id, token);
             if (res2.message)
             {
-                return goto('/');
+                return goto(`/login?message=${res.message}`);
             }
             enigma_attempts = res2.enigma_step_attempts as EnigmaAttempt[];
             console.log(enigma_attempts);
@@ -83,22 +136,31 @@
                 }
             }
 
+            if (next_step_index == -1 || next_step_index == enigma.enigma_steps.length + 1)
+            {
+                // Finished enigma
+                enigma_success_message = 'Congratulations! You finished the enigma!';
+                enigma_completed = true;
+            }
+
             // Countdown message
             if (ParseDate(enigma.start_date) > new Date())
             {
                 countdown_message = 'Enigma starts in';
+                countdown_date = enigma.start_date;
             }
             else if (ParseDate(enigma.end_date) < new Date())
             {
                 countdown_message = 'Enigma ended';
+                countdown_date = enigma.end_date;
             }
             else
             {
                 countdown_message = 'Enigma ends in';
+                countdown_date = enigma.end_date;
             }
 
             loading = false;
-            
         }
     });
 </script>
@@ -111,7 +173,7 @@
             <div class="flex flex-row space-x-2 w-3/4">
                 <figure><img class="rounded h-40" src="https://placeimg.com/200/280" alt="Movie"/></figure>
                 <div class="flex flex-col space-y-2">
-                    <h1 class="text-2xl font-semibold">{enigma.title}</h1>
+                    <h1 class="text-2xl font-semibold">{enigma.title} {enigma_completed ? '✅   ' : ''}</h1>
                     <p class="italic">Created the {FormatDate(enigma.created)}</p>
                     <p class="mt-2">{@html FormatDescription(enigma.description)}</p>
                 </div>
@@ -123,7 +185,7 @@
                     <p>End: <span class="font-semibold">{enigma.end_date}</span></p>
                 </div>
                 <div class="divider divider-vertical"></div>
-                <Countdown message={countdown_message} end_date={enigma.end_date}/>
+                <Countdown message={countdown_message} date={countdown_date}/>
             </div>
         </div>
         <div class="divider divider-vertical"></div>
@@ -134,10 +196,10 @@
                     {#if enigma.enigma_steps}
                         {#each enigma.enigma_steps as enigmaStep}
                             <EnigmaStepCard on:click={() => {
-                                if (next_step_index < enigmaStep.index) return;
+                                if (next_step_index < enigmaStep.index && next_step_index != -1) return;
                                 selected_step = enigmaStep;
                                 selected_step_completed = HasCompletedStep(enigmaStep);
-                            }} {enigmaStep} blur={next_step_index < enigmaStep.index} details completed={HasCompletedStep(enigmaStep)} />
+                            }} {enigmaStep} blur={next_step_index < enigmaStep.index && next_step_index != -1} details completed={HasCompletedStep(enigmaStep)} />
                         {/each}
                     {/if}
                 </div>
@@ -155,13 +217,18 @@
                     {/if}
                     <div class="divider divider-vertical"></div>
                     {#if !selected_step_completed}
+                        {#if enigma_error}
+                            <p class="text-error text-sm font-semibold">{enigma_error}</p>
+                        {/if}
                         <div class="form-control">
                             <p class="label">
                                 <span class="label-text">Answer</span>
                             </p>
                             <input bind:value={answer} type="text" placeholder="..." class="input input-bordered" />
-                            <button class="btn btn-success mt-2">Submit</button>
+                            <button on:click={AttemptEnigmaStepForm} class="btn btn-success mt-4">Submit</button>
                         </div>
+                    {:else if enigma_success_message}
+                        <p class="text-success text-sm font-semibold">{enigma_success_message}</p>
                     {/if}
                 {/if}
             </div>

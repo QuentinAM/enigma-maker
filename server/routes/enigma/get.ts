@@ -48,9 +48,11 @@ router.get("/api/enigma/me", async (req, res) => {
         if (user)
         {
             const enigmas: QueryResult = await pool.query(`
-                SELECT (e, ea.current_step_index, ea.completed, ea.created) FROM enigma e
+                SELECT e.*, ea.current_step_index, ea.completed, ea.created, COUNT(es.id) AS n_step FROM enigma e
                 INNER JOIN enigma_assignment ea ON e.id = ea.enigma_id
-                WHERE ea.user_id = $1;
+                INNER JOIN enigma_step es ON e.id = es.enigma_id
+                WHERE ea.user_id = $1
+                GROUP BY e.id, ea.current_step_index, ea.completed, ea.created;
             `, [user.id]);
             return res.status(200).json({ enigmas: enigmas.rows });
         }

@@ -21,6 +21,11 @@ export interface Enigma {
     created: string;
     enigma_steps: EnigmaStep[];
     public: boolean;
+    countdown_message?: string;
+    countdown_date?: string;
+    completed?: boolean;
+    current_step_index?: number;
+    n_step?: string;
 }
 
 export interface EnigmaStep {

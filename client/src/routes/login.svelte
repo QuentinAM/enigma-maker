@@ -5,10 +5,11 @@
 	import { onMount } from 'svelte';
 
     const redirect = $page.url.searchParams.get('redirect');
+    const message = $page.url.searchParams.get('message');
 
     let email: string = '';
     let password: string = '';
-    let error: string = '';
+    let error: string = message ?? '';
 
     async function Login(loginFunction: Promise<any>)
     {
@@ -60,7 +61,9 @@
                             <input class="hidden"/>
                             <a href="/recover" class="label-text-alt link link-hover">Forgot password?</a>
                         </label>
-                        <p class="text-error text-sm font-semibold">{error}</p>
+                        {#if error}
+                            <p class="text-error text-sm font-semibold">{error}</p>
+                        {/if}
                         <div class="form-control mt-6">
                             <button on:click={() => Login(LoginEmailPassword(email, password))} class="btn btn-primary">Login</button>
                         </div>

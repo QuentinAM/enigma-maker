@@ -104,7 +104,11 @@
             }
 
             const res: any = await GetEnigmaOwn(token);
-            enigmas = res.enigmas;
+            if (res.message)
+            {
+                goto('/login');
+            }
+            enigmas = res.enigmas as Enigma[];
         }
     });
 
@@ -140,7 +144,7 @@
 
         <p class="font-semibold text-lg w-full">My enigmas <span on:click={() => creatingEnigma = !creatingEnigma} class="text-lg hover:cursor-pointer">➕</span></p>
         {#each enigmas as enigma}
-            <EnigmaCard {enigma} />
+            <EnigmaCard manage {enigma} />
         {/each}
         {#if creatingEnigma}
             <div transition:slide class="card flex-shrink-0 w-full shadow-lg bg-base-100 mb-3">
