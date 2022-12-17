@@ -51,3 +51,16 @@ export async function LoginToken(token: string)
     }
     return json;
 }
+
+export async function Register(email: string, password: string, password_conf: string, username: string): Promise<any>
+{
+    const res: Response = await fetch(`${API_URL}/api/users`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ email, password, password_conf, username })
+    });
+    const json: any = await res.json();
+    return json;
+}

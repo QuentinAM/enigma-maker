@@ -13,19 +13,37 @@ export const router = express.Router();
 router.post("/api/users", async (req, res) => {
     try
     {
-        if (!CheckParams(req.body, ["password", "email"]))
+        if (!CheckParams(req.body, ["username", "password", "password_conf", "email"]))
         {
             return res.status(400).json({ message: "Missing parameters" });
         }
 
-        const { email, password } = req.body;
+        const { username, email, password, password_conf } = req.body;
+
+        // Check if is email pattern
+        if (!email.match(/^([\w.%+-]+)@([\w-]+\.)+([\w]{2,})$/i))
+        {
+            return res.status(400).json({ message: "Invalid email address" });
+        }
+
+        // Check if password is strong enough
+        if (password.length < 10)
+        {
+            return res.status(400).json({ message: "Password must be at least 10 characters long" });
+        }
+
+        // Check if password and password confirmation are the same
+        if (password !== password_conf)
+        {
+            return res.status(400).json({ message: "Password and password confirmation must be the same" });
+        }   
         
         // Encrypt password
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
-        await pool.query("INSERT INTO users (id, email, password) VALUES (DEFAULT, $1, $2);", [email, hashedPassword]);
-        res.status(200).json({ message: "User created successfully" });
+        await pool.query("INSERT INTO users (id, email, username, password) VALUES (DEFAULT, $1, $2, $3);", [email, username, hashedPassword]);
+        res.status(200).json({ });
     }
     catch (error: any)
     {

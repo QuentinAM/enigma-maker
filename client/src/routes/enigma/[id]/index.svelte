@@ -24,6 +24,7 @@
     let next_step_index: number = -1;
     let countdown_message: string = 'Enigma starts in';
     let countdown_date: string = '';
+    let enigma_on_going: boolean = false;
 
     // Selected step
     let answer: string = '';
@@ -60,6 +61,7 @@
                     user_id: res.attempt.user_id,
                     attempt: res.attempt.attempt,
                     created: res.attempt.created,
+                    username: '',
                     email: '',
                     index: 0,
                     success: true
@@ -158,6 +160,7 @@
             {
                 countdown_message = 'Enigma ends in';
                 countdown_date = enigma.end_date;
+                enigma_on_going = true;
             }
 
             loading = false;
@@ -216,7 +219,7 @@
                         <div class="badge badge-outline">Case sensitive</div>
                     {/if}
                     <div class="divider divider-vertical"></div>
-                    {#if !selected_step_completed}
+                    {#if !selected_step_completed && enigma_on_going}
                         {#if enigma_error}
                             <p class="text-error text-sm font-semibold">{enigma_error}</p>
                         {/if}

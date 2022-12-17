@@ -20,7 +20,7 @@
             {#if users}
                 {#each users as user}
                     <tr>
-                        <th>{user.email}</th>
+                        <th>{user.username}</th>
                         <td>{user.current_step_index}</td>
                         <td>{user.completed ? '✅' : '❌'}</td>
                         <td>{FormatDate(user.created)}</td>

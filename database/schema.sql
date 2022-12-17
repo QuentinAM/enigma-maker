@@ -1,10 +1,12 @@
 CREATE TABLE users (
     id            SERIAL       NOT NULL,
     email         VARCHAR(255) NOT NULL,
+    username      VARCHAR(32) DEFAULT '',
     password      VARCHAR(255) NOT NULL,
     created       TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
-    UNIQUE (email)
+    UNIQUE (email),
+    UNIQUE (username)
 );
 
 CREATE TABLE enigma(

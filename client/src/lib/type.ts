@@ -53,6 +53,7 @@ export interface EnigmaAttempt {
     attempt: string;
     created: string;
     email: string;
+    username: string;
     index: number;
     success: boolean;
 }
@@ -62,6 +63,7 @@ export interface EnigmaAssignment {
     user_id: number;
     email: string;
     created: string;
+    username: string;
     current_step_index: number;
     completed: boolean;	
     enigma_id: number;

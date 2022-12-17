@@ -11,7 +11,7 @@
         <thead>
             <tr>
                 <th>Step</th>
-                <th>Email</th>
+                <th>User</th>
                 <th>Attempt</th>
                 <th>Date</th>
                 <th>Success</th>
@@ -22,7 +22,7 @@
                 {#each attempts as attempt, i}
                     <tr>
                         <th>{attempt.index}</th>
-                        <td>{attempt.email}</td>
+                        <td>{attempt.username}</td>
                         <td>{attempt.attempt}</td>
                         <td>{FormatDate(attempt.created)}</td>
                         <td>{attempt.success ? '✅' : '❌'}</td>

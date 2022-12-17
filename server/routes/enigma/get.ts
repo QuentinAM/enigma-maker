@@ -168,7 +168,7 @@ router.get("/api/enigma/:id/attempts", async (req, res) => {
 
             // Get enigma_step_attempt related to enigma, also get email of user
             const enigma_step_attempts: QueryResult = await pool.query(`
-                SELECT esa.*, u.email, es.index,
+                SELECT esa.*, u.email, u.username, es.index,
                 CASE WHEN esa.attempt = es.solution THEN true ELSE false END AS success
                 FROM enigma_step_attempt esa
                 INNER JOIN users u ON esa.user_id = u.id
@@ -257,7 +257,7 @@ router.get("/api/enigma/:id/users", async (req, res) => {
         {
             // Get all users assigned to enigma
             const request_res: QueryResult = await pool.query(`
-                SELECT u.email, ea.*
+                SELECT u.email, u.username, ea.*
                 FROM enigma_assignment ea
                 INNER JOIN users u ON ea.user_id = u.id
                 WHERE ea.enigma_id = $1

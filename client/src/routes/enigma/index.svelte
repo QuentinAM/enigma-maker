@@ -12,10 +12,6 @@
 	import { ParseDate } from "$lib/utils";
 
     let enigmas: Enigma[];
-
-    // Extra data
-    let countdown_message: string = 'Enigma starts in';
-    let countdown_date: string = '';
     
     let loading: boolean = true;
 
@@ -23,7 +19,7 @@
         const token: string | null = localStorage.getItem('token');
         if (!token)
         {
-            goto('/login');
+            return goto(`/login?message=You need to connect to see your assigned enigmas`.replace(/\s/g, "%20"));
         }
         else
         {
@@ -32,14 +28,14 @@
                 const res: any = await LoginToken(token);
                 if (res.message)
                 {
-                    return goto('/login');
+                    return goto(`/login?message=${res.message}`.replace(/\s/g, "%20"));
                 }
             }
 
             const res: any = await GetMyEnigma(token);
             if (res.message)
             {
-                return goto(`/login?message=${res.message}`);
+                return goto(`/login?message=${res.message}`.replace(/\s/g, "%20"));
             }
             enigmas = res.enigmas as Enigma[];
             

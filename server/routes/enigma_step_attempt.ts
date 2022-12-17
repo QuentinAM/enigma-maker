@@ -1,5 +1,5 @@
 import { pool } from "../index";
-import { CheckParams } from "../utils";
+import { CheckParams, ParseDate } from "../utils";
 import { CheckSessionToken } from "../utils";
 import express  from "express";
 import { QueryResult } from "pg";
@@ -60,12 +60,12 @@ router.post("/api/enigma_step_attempt/:step_id", async (req, res) => {
                 return res.status(400).json({ message: "Enigma not found" });
             }
 
-            if (enigma.rows[0].start_date > new Date())
+            if (ParseDate(enigma.rows[0].start_date) > new Date())
             {
                 return res.status(400).json({ message: "Enigma not started yet" });
             }
             
-            if (enigma.rows[0].end_date < new Date())
+            if (ParseDate(enigma.rows[0].end_date) < new Date())
             {
                 return res.status(400).json({ message: "Enigma ended" });
             }
