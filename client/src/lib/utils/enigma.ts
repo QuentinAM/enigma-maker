@@ -158,3 +158,15 @@ export async function AttemptEnigmaStep(step_id: number, attempt: string, token:
     const json: any = await res.json();
     return json;
 }
+
+export async function GetPublicEnigma(): Promise<any>
+{
+    const res: Response = await fetch(`${API_URL}/api/enigma/public`, {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json"
+        }
+    });
+    const json: any = await res.json();
+    return json;
+}

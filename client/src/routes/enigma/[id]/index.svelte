@@ -108,41 +108,39 @@
             const res: any = await GetEnigma(enigma_id, token);
             if (res.message)
             {
-                return goto(`/login?message=${res.message}`);
+                return goto(`/enigma?message=${res.message}`);
             }
             enigma = res.enigma as Enigma;
 
-            // If no description or enignma_steps means not assigned to and not user
-            if (!enigma.description || !enigma.enigma_steps)
+            // Enigma_steps if owner or started
+            if (enigma.enigma_steps)
             {
-                return goto(`/login?message=${res.message}`);
-            }
-
-            // Get my attemps
-            const res2: any = await GetEnigmaMyAttempts(enigma_id, token);
-            if (res2.message)
-            {
-                return goto(`/login?message=${res.message}`);
-            }
-            enigma_attempts = res2.enigma_step_attempts as EnigmaAttempt[];
-            console.log(enigma_attempts);
-
-            // Get index of next uncompleted step
-            for (let i = 0; i < enigma.enigma_steps.length; i++)
-            {
-                const step: EnigmaStep = enigma.enigma_steps[i];
-                if (!HasCompletedStep(step))
+                // Get my attempts
+                const res2: any = await GetEnigmaMyAttempts(enigma_id, token);
+                if (res2.message)
                 {
-                    next_step_index = step.index;
-                    break;
+                    return goto(`/login?message=${res.message}`);
                 }
-            }
+                enigma_attempts = res2.enigma_step_attempts as EnigmaAttempt[];
+                console.log(enigma_attempts);
 
-            if (next_step_index == -1 || next_step_index == enigma.enigma_steps.length + 1)
-            {
-                // Finished enigma
-                enigma_success_message = 'Congratulations! You finished the enigma!';
-                enigma_completed = true;
+                // Get index of next uncompleted step
+                for (let i = 0; i < enigma.enigma_steps.length; i++)
+                {
+                    const step: EnigmaStep = enigma.enigma_steps[i];
+                    if (!HasCompletedStep(step))
+                    {
+                        next_step_index = step.index;
+                        break;
+                    }
+                }
+
+                if (next_step_index == -1 || next_step_index == enigma.enigma_steps.length + 1)
+                {
+                    // Finished enigma
+                    enigma_success_message = 'Congratulations! You finished the enigma!';
+                    enigma_completed = true;
+                }
             }
 
             // Countdown message
@@ -172,17 +170,17 @@
     <img src={Spinner} class="animate-spin h-14 m-2" alt="Loading..." />
 {:else if enigma}
     <div class="flex flex-col mx-5">
-        <div class="mt-3 flex flex-row w-full">
+        <div class="mt-3 flex lg:flex-row flex-col w-full">
             <div class="flex flex-row space-x-2 w-3/4">
-                <figure><img class="rounded h-40" src="https://placeimg.com/200/280" alt="Movie"/></figure>
-                <div class="flex flex-col space-y-2">
+                <figure class="w-1/5"><img class="rounded h-full" src="https://placeimg.com/200/280" alt="Movie"/></figure>
+                <div class="flex flex-col space-y-2 w-4/5">
                     <h1 class="text-2xl font-semibold">{enigma.title} {enigma_completed ? '✅   ' : ''}</h1>
                     <p class="italic">Created the {FormatDate(enigma.created)}</p>
                     <p class="mt-2">{@html FormatDescription(enigma.description)}</p>
                 </div>
             </div>
-            <div class="divider divider-horizontal"></div>
-            <div class="w-1/4 flex flex-col items-center">
+            <div class="divider lg:divider-horizontal divider-vertical"></div>
+            <div class="lg:w-1/4 w-full flex flex-col items-center">
                 <div class="">
                     <p>Start: <span class="font-semibold">{enigma.start_date}</span></p>
                     <p>End: <span class="font-semibold">{enigma.end_date}</span></p>

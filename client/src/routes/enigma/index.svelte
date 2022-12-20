@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { goto } from "$app/navigation";
 	import { page } from "$app/stores";
-	import {  GetMyEnigma } from "$lib/utils/enigma";
+	import {  GetMyEnigma, GetPublicEnigma } from "$lib/utils/enigma";
 	import { user } from "$lib/utils/store";
 	import { LoginToken } from "$lib/utils/user";
 	import { onMount } from "svelte";
@@ -11,8 +11,12 @@
 	import EnigmaCard from "$lib/components/enigmas/EnigmaCard.svelte";
 	import { ParseDate } from "$lib/utils";
 
+    let message = $page.url.searchParams.get('message');
+
     let enigmas: Enigma[];
-    
+    let public_enigmas: Enigma[];
+    let showing_public: boolean = false;    
+
     let loading: boolean = true;
 
     onMount(async () => {
@@ -32,15 +36,45 @@
                 }
             }
 
-            const res: any = await GetMyEnigma(token);
+            let res: any = await GetMyEnigma(token);
+            if (res.message)
+            {
+                message = res.message;
+                loading = false;
+                return;
+            }
+            enigmas = res.enigmas as Enigma[];
+            console.log(enigmas);
+            
+            // For each enigma, check if it has started
+            enigmas.forEach((enigma: Enigma) => {
+                // Countdown message
+                if (ParseDate(enigma.start_date) > new Date())
+                {
+                    enigma.countdown_message = 'Enigma starts in';
+                    enigma.countdown_date = enigma.start_date;
+                }
+                else if (ParseDate(enigma.end_date) < new Date())
+                {
+                    enigma.countdown_message = 'Enigma ended';
+                    enigma.countdown_date = enigma.end_date;
+                }
+                else
+                {
+                    enigma.countdown_message = 'Enigma ends in';
+                    enigma.countdown_date = enigma.end_date;
+                }
+            });
+
+            res = await GetPublicEnigma();
             if (res.message)
             {
                 return goto(`/login?message=${res.message}`.replace(/\s/g, "%20"));
             }
-            enigmas = res.enigmas as Enigma[];
+            public_enigmas = res.enigmas as Enigma[];
             
             // For each enigma, check if it has started
-            enigmas.forEach((enigma: Enigma) => {
+            public_enigmas.forEach((enigma: Enigma) => {
                 // Countdown message
                 if (ParseDate(enigma.start_date) > new Date())
                 {
@@ -69,9 +103,22 @@
         {#if loading}
             <img src={Spinner} class="animate-spin h-14 m-2" alt="Loading..." />
         {:else if enigmas}
-            {#each enigmas as enigma}
-                <EnigmaCard step_message={`${(enigma.current_step_index ?? 0) + 1}/${enigma.n_step}`} {enigma} />
-            {/each}
+            <div class="tabs">
+                <a on:click|preventDefault={() => showing_public = false} href='/enigma' class:tab-active={!showing_public} class="tab tab-lg tab-lifted">Enigma I am assigned to</a> 
+                <a on:click|preventDefault={() => showing_public = true} href='/enigma' class:tab-active={showing_public} class="tab tab-lg tab-lifted">Public Enigmas</a>
+            </div>
+            {#if message}
+                <p class="text-error text-sm font-semibold">{message}</p>
+            {/if}
+            {#if showing_public}
+                {#each public_enigmas as enigma}
+                    <EnigmaCard is_public {enigma} />
+                {/each}
+            {:else}
+                {#each enigmas as enigma}
+                    <EnigmaCard step_message={`${(enigma.current_step_index ?? 0) + 1}/${enigma.n_step}`} {enigma} />
+                {/each}
+            {/if}
         {/if}
     </div>
 </div>

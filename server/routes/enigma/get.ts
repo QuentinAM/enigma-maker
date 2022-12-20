@@ -1,5 +1,5 @@
 import { pool } from "../../index";
-import { CheckSessionToken } from "../../utils";
+import { CheckSessionToken, ParseDate } from "../../utils";
 import express  from "express";
 import { QueryResult } from "pg";
 
@@ -48,11 +48,10 @@ router.get("/api/enigma/me", async (req, res) => {
         if (user)
         {
             const enigmas: QueryResult = await pool.query(`
-                SELECT e.*, ea.current_step_index, ea.completed, ea.created, COUNT(es.id) AS n_step FROM enigma e
+                SELECT e.*, ea.current_step_index, ea.completed, ea.created FROM enigma e
                 INNER JOIN enigma_assignment ea ON e.id = ea.enigma_id
-                INNER JOIN enigma_step es ON e.id = es.enigma_id
-                WHERE ea.user_id = $1
-                GROUP BY e.id, ea.current_step_index, ea.completed, ea.created;
+                LEFT JOIN enigma_step es ON e.id = es.enigma_id
+                WHERE ea.user_id = $1;
             `, [user.id]);
             return res.status(200).json({ enigmas: enigmas.rows });
         }
@@ -101,29 +100,29 @@ router.get("/api/enigma/:id", async (req, res) => {
 
             const enigma: any = request_res.rows[0];
 
-            // Check if user is owner of enigma or assigned to it
-            let is_owner: boolean = false;
-            const request_res2: QueryResult = await pool.query("SELECT * FROM enigma_assignment WHERE enigma_id = $1 AND user_id = $2;", [enigma.id, user.id]);
-            if (request_res2.rowCount === 0)
+            // Check if is owner
+            if (enigma.owner_id === user.id)
             {
-                const request_res3: QueryResult = await pool.query("SELECT * FROM enigma WHERE id = $1 AND owner_id = $2;", [enigma.id, user.id]);
-                if (request_res3.rowCount === 0)
-                {
-                    // Remove description if not owner or assigned
-                    delete enigma.description;
-                    return res.status(200).json({ enigma: enigma });
-                }
-                is_owner = true;
-                
+                // Get all enigma_steps
+                const enigma_steps: QueryResult = await pool.query("SELECT * FROM enigma_step WHERE enigma_id = $1 ORDER BY index;", [enigma.id]);
+                enigma.enigma_steps = enigma_steps.rows;
+                return res.status(200).json({ enigma: enigma });
             }
 
-            // Get all enigma_steps
-            const enigma_steps: QueryResult = await pool.query("SELECT * FROM enigma_step WHERE enigma_id = $1 ORDER BY index;", [enigma.id]);
-            enigma.enigma_steps = enigma_steps.rows;
-
-            if (!is_owner)
+            // Check if is assigned
+            const enigma_assignment: QueryResult = await pool.query("SELECT * FROM enigma_assignment WHERE enigma_id = $1 AND user_id = $2;", [enigma.id, user.id]);
+            if (enigma_assignment.rowCount === 0)
             {
-                // Remove solution if not owner
+                return res.status(400).json({ message: "You are not assigned to this enigma" });
+            }
+
+            // If started get enigma_step
+            if (ParseDate(enigma.start_date) <= new Date())
+            {
+                const enigma_steps: QueryResult = await pool.query("SELECT * FROM enigma_step WHERE enigma_id = $1 ORDER BY index;", [enigma.id]);
+                enigma.enigma_steps = enigma_steps.rows;
+
+                // Obviously don't send solution
                 for (let i = 0; i < enigma.enigma_steps.length; i++)
                 {
                     delete enigma.enigma_steps[i].solution;
