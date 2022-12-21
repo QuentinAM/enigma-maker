@@ -26,6 +26,7 @@ export interface Enigma {
     completed?: boolean;
     current_step_index?: number;
     n_step?: string;
+    joined_date?: string;
 }
 
 export interface EnigmaStep {

@@ -39,6 +39,6 @@
 		"npm": "^8.15.1",
 		"octokit": "^2.0.4",
 		"svelte-imask": "^1.2.0",
-		"svelte-typewriter": "^3.0.1"
+		"svelte-typewriter": "^3.1.4"
 	}
 }

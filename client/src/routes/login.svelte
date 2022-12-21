@@ -2,6 +2,7 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import { user } from '$lib/utils/store';
+    import { slide } from "svelte/transition";
     import { LoginEmailPassword, LoginToken } from '$lib/utils/user';
 	import { onMount } from 'svelte';
 
@@ -59,7 +60,7 @@
     onMount(() =>
     {
         const token: string | null = localStorage.getItem('token');
-        if (token && message != 'jwt expired')
+        if (token && !message)
         {
             Login(LoginToken(token));
         }
@@ -84,7 +85,7 @@
             <div class="hero-content flex-col lg:flex-row-reverse">
                 <div class="text-center lg:text-left">
                     <h1 class="text-5xl font-bold">Login now!</h1>
-                    <a href="/register" on:click|preventDefault={() => goto('/register')} class="link link-hover text-blue-500">No account? Register now !</a>
+                    <a href="/register" on:click|preventDefault={() => goto(`/register${redirect ? `?redirect=${redirect}` : ''}`)} class="link link-hover text-blue-500">No account? Register now !</a>
                 </div>
                 <div class="card flex-shrink-0 w-full max-w-sm shadow-2xl bg-base-100">
                     <div class="card-body">
@@ -105,7 +106,7 @@
                             <a href="/recover" class="label-text-alt link link-hover">Forgot password?</a>
                         </label>
                         {#if error}
-                            <p class="text-error text-sm font-semibold">{error}</p>
+                            <p class="text-error text-sm font-semibold" transition:slide>{error}</p>
                         {/if}
                         <div class="form-control mt-6">
                             <button on:click={CheckEmailPasswordLogin} class="btn btn-primary">Login</button>

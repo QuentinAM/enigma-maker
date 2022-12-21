@@ -58,7 +58,7 @@
 
 </script>
 
-<div class="flex flex-col items-center">
+<div class="flex flex-col items-center justify-center">
     <p class="text-xl font-semibold mb-1">{message}</p>
     {#if message != 'Enigma ended'}
         <div class="grid grid-flow-col gap-5 text-center auto-cols-max">

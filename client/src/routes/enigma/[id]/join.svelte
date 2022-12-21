@@ -1,14 +1,21 @@
 <script lang="ts">
 	import { goto } from "$app/navigation";
 	import { user } from "$lib/utils/store";
+    import { fade, slide } from "svelte/transition";
 	import { LoginToken } from "$lib/utils/user";
 	import { onMount } from "svelte";
     import { page } from '$app/stores';
     import { GetEnigma, JoinEnigma } from "$lib/utils/enigma";
 	import type { Enigma } from "$lib/type";
-	import { FormatDate } from "$lib/utils";
+	import { FormatDate, ParseDate } from "$lib/utils";
+	import Countdown from "$lib/components/Countdown.svelte";
 
     const enigma_id: string = $page.params.id;
+
+    let countdown_message: string = 'Enigma starts in';
+    let countdown_date: string = '';
+
+    let loading_join: boolean = false;
     
     let enigma: Enigma;
     let enigma_error: string = '';
@@ -21,7 +28,9 @@
         const token: string | null = localStorage.getItem('token');
         if (token)
         {
+            loading_join = true;
             const res: any = await JoinEnigma(enigma_id, token);
+            loading_join = false;
             if (res.message)
             {
                 if (res.message == "You are already assigned to this enigma")
@@ -59,7 +68,7 @@
         const token: string | null = localStorage.getItem('token');
         if (!token)
         {
-            goto(`/login?redirect=/enigma/${enigma_id}/join`);
+            return goto(`/login?redirect=/enigma/${enigma_id}/join`);
         }
         else
         {
@@ -68,7 +77,7 @@
                 const res: any = await LoginToken(token);
                 if (res.message)
                 {
-                    goto(`/login?redirect=/enigma/${enigma_id}/join`);
+                    return goto(`/login?redirect=/enigma/${enigma_id}/join`);
                 }
             }
 
@@ -81,36 +90,37 @@
             else
             {
                 enigma = res.enigma as Enigma;
-                const now: string = new Date().toLocaleString();
+                const now: Date = new Date();
 
-                if (now < enigma.start_date)
+                // Countdown message
+                if (ParseDate(enigma.start_date) > now)
                 {
                     status = 'Not started ⏳';
-                    status_message = 'You can modify the enigma until the start date.';
+                    countdown_message = 'Enigma starts in';
+                    countdown_date = enigma.start_date;
                 }
-                else if (now > enigma.end_date)
+                else if (ParseDate(enigma.end_date) < now)
                 {
                     status = 'Ended ✅';
-                    status_message = 'Hope you enjoyed the enigma!';
+                    countdown_message = 'Enigma ended';
+                    countdown_date = enigma.end_date;
                 }
                 else
                 {
                     status = 'Started 🚀';
-                    status_message = 'The enigma has started! You cannot modify it anymore.';
+                    countdown_message = 'Enigma ends in';
+                    countdown_date = enigma.end_date;
                 }
             }
         }
     });
 </script>
 
-<div class="flex flex-col space-y-2 items-center justify-center">
-    {#if enigma_error}
-        <p class="text-error font-semibold">{enigma_error}</p>
-    {/if}
-    <div class="card card-side bg-base-100 shadow-lg shadow-black w-2/3">
+<div class="flex flex-col space-y-2 mt-3 items-center justify-center">
+    <div class="card card-side bg-base-100 shadow-lg shadow-black w-2/3" transition:fade>
         {#if enigma}
-            <figure><img class="h-full" src="https://placeimg.com/200/280" alt="Movie"/></figure>
-            <div class="card-body">
+            <figure class="w-1/5"><img class="h-full" src="https://placeimg.com/200/280" alt="Movie"/></figure>
+            <div class="card-body w-4/5">
                 <h2 class="card-title">{enigma.title}</h2>
                 {#if enigma.description}
                     <p>{enigma.description}</p>
@@ -119,10 +129,14 @@
                 <p class="italic">Created the {FormatDate(enigma.created)}</p>
                 <p>Start the <span class=" text-white">{enigma.start_date}</span></p>
                 <p>End the <span class=" text-white">{enigma.end_date}</span></p>
+                <Countdown message={countdown_message} date={countdown_date}/>
                 <div class="card-actions justify-end">
-                    <button on:click={JoinEnigmaForm} class="btn btn-primary">Join</button>
+                    <button class:loading={loading_join} on:click={JoinEnigmaForm} class="btn btn-primary">{loading_join ? '' : 'Join'}</button>
                 </div>
             </div>
         {/if}
     </div>
+    {#if enigma_error}
+        <p class="text-error mt-4 font-semibold" transition:slide>{enigma_error}</p>
+    {/if}
 </div>

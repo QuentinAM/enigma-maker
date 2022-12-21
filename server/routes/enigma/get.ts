@@ -48,11 +48,12 @@ router.get("/api/enigma/me", async (req, res) => {
         if (user)
         {
             const enigmas: QueryResult = await pool.query(`
-                SELECT e.*, ea.current_step_index, ea.completed, ea.created FROM enigma e
+                SELECT e.*, ea.current_step_index, ea.completed, ea.created as joined_date FROM enigma e
                 INNER JOIN enigma_assignment ea ON e.id = ea.enigma_id
-                LEFT JOIN enigma_step es ON e.id = es.enigma_id
-                WHERE ea.user_id = $1;
+                WHERE ea.user_id = $1
+                ORDER BY e.start_date DESC;
             `, [user.id]);
+            console.log(enigmas);
             return res.status(200).json({ enigmas: enigmas.rows });
         }
         else
@@ -113,7 +114,7 @@ router.get("/api/enigma/:id", async (req, res) => {
             const enigma_assignment: QueryResult = await pool.query("SELECT * FROM enigma_assignment WHERE enigma_id = $1 AND user_id = $2;", [enigma.id, user.id]);
             if (enigma_assignment.rowCount === 0)
             {
-                return res.status(400).json({ message: "You are not assigned to this enigma" });
+                return res.status(200).json({ enigma: enigma });   
             }
 
             // If started get enigma_step

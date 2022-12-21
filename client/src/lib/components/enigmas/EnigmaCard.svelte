@@ -5,6 +5,7 @@
 	import { goto } from "$app/navigation";
 	import Countdown from "../Countdown.svelte";
 	import { JoinEnigma } from "$lib/utils/enigma";
+	import { FormatDate } from "$lib/utils";
 
     export let enigma: Enigma;
     export let manage: boolean = false;
@@ -73,26 +74,28 @@
 
 </script>
 
-<div class="card card-side bg-base-100 shadow-lg w-full">
+<div class="card card-side bg-base-100 shadow-lg w-full h-[19rem]">
     <figure class="w-1/5"><img class="h-full" src="https://placeimg.com/200/280" alt="Movie"/></figure>
-    <div class="card-body w-4/5">
+    <div class="card-body p-4 gap-1 w-4/5 relative">
         <h2 class="card-title">{enigma.title}</h2>
-        {#if enigma.description}
-            <p class:truncate={!manage}>{enigma.description}</p>
-        {/if}
-        <p>Status : {status}</p>
-        {#if now >= enigma.start_date}
-            <p>Completed: {enigma.completed ? '✅' : '❌'}</p>
-        {/if}
-        {#if step_message && !enigma.completed}
-            <p>Current step: {step_message}</p>
-        {/if}
+        <div class="flex flex-col space-y-2">
+            {#if enigma.description}
+                <p class:truncate={!manage}>{enigma.description}</p>
+            {/if}
+            <p>Status : {status}</p>
+            {#if now >= enigma.start_date}
+                <p>Completed: {enigma.completed ? '✅' : '❌'}</p>
+            {/if}
+            {#if step_message && !enigma.completed}
+                <p>Current step: {step_message}</p>
+            {/if}
+        </div>
         {#if !manage}
             {#if enigma.countdown_date && enigma.countdown_message}
                 <Countdown date={enigma.countdown_date} message={enigma.countdown_message} />
             {/if}
         {/if}
-        <div class="card-actions justify-end">
+        <div class="absolute bottom-3 right-3">
             {#if manage}
                 <button on:click={() => goto(`/enigma/${enigma.id}/manage`)} class="btn btn-primary">Manage</button>
                 <label for="delete-modal" on:click={() => {
@@ -109,6 +112,9 @@
         </div>
         {#if error_message}
             <p class="text-error font-semibold">{error_message}</p>
+        {/if}
+        {#if enigma.joined_date}
+            <p class="italic absolute bottom-3 left-3">Joined at: <span class="font-semibold">{FormatDate(enigma.joined_date)}</span></p>
         {/if}
     </div>
 </div>

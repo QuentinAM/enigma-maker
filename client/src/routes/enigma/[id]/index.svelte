@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { goto } from "$app/navigation";
 	import { page } from "$app/stores";
+    import { fade, slide } from "svelte/transition";
 	import { FormatDate, FormatDescription, ParseDate } from "$lib/utils";
 	import { AttemptEnigmaStep, GetEnigma, GetEnigmaMyAttempts } from "$lib/utils/enigma";
 	import { user } from "$lib/utils/store";
@@ -19,6 +20,7 @@
     let enigma_attempts: EnigmaAttempt[] = [];
     
     let loading: boolean = true;
+    let loading_attempt: boolean = false;
 
     // Extra data
     let next_step_index: number = -1;
@@ -47,8 +49,9 @@
         const token: string | null = localStorage.getItem('token');
         if (token)
         {
+            loading_attempt = true;
             const res: any = await AttemptEnigmaStep(selected_step.id, answer, token);
-            console.log(res);
+            loading_attempt = false;
             if (res.message)
             {
                 enigma_error = res.message;
@@ -169,11 +172,11 @@
 {#if loading}
     <img src={Spinner} class="animate-spin h-14 m-2" alt="Loading..." />
 {:else if enigma}
-    <div class="flex flex-col mx-5">
+    <div class="flex flex-col px-5 bg-base-200 min-h-screen">
         <div class="mt-3 flex lg:flex-row flex-col w-full">
-            <div class="flex flex-row space-x-2 w-3/4">
-                <figure class="w-1/5"><img class="rounded h-full" src="https://placeimg.com/200/280" alt="Movie"/></figure>
-                <div class="flex flex-col space-y-2 w-4/5">
+            <div class="flex lg:flex-row flex-col space-x-2 lg:w-3/4 w-full">
+                <figure><img class="rounded h-full" src="https://placeimg.com/200/280" alt="Movie"/></figure>
+                <div class="flex flex-col space-y-2 lg:w-4/5 w-full">
                     <h1 class="text-2xl font-semibold">{enigma.title} {enigma_completed ? '✅   ' : ''}</h1>
                     <p class="italic">Created the {FormatDate(enigma.created)}</p>
                     <p class="mt-2">{@html FormatDescription(enigma.description)}</p>
@@ -189,11 +192,11 @@
                 <Countdown message={countdown_message} date={countdown_date}/>
             </div>
         </div>
-        <div class="divider divider-vertical"></div>
-        <div class="flex flex-row h-[30rem]">
-            <div class="w-[25rem]">
+        <div class="divider lg:divider-vertical divider-horizontal"></div>
+        <div class="flex lg:flex-row flex-col lg:h-[30rem]">
+            <div class="lg:w-[25rem]">
                 <p class="text-xl font-semibold">Steps</p>
-                <div class="overflow-y-auto space-y-4 py-3 px-5 h-full">
+                <div class="overflow-y-auto space-y-4 pt-3 pb-10 px-5 h-full">
                     {#if enigma.enigma_steps}
                         {#each enigma.enigma_steps as enigmaStep}
                             <EnigmaStepCard on:click={() => {
@@ -205,7 +208,7 @@
                     {/if}
                 </div>
             </div>
-            <div class="divider divider-horizontal"></div>
+            <div class="divider lg:divider-horizontal divider-vertical"></div>
             <div class="h-full w-full overflow-y-auto relative px-2">
                 {#if selected_step}
                     <p class="font-semibold text-xl">{selected_step.index}/{enigma.enigma_steps.length} - {selected_step.title}</p>
@@ -219,14 +222,14 @@
                     <div class="divider divider-vertical"></div>
                     {#if !selected_step_completed && enigma_on_going}
                         {#if enigma_error}
-                            <p class="text-error text-sm font-semibold">{enigma_error}</p>
+                            <p class="text-error text-sm font-semibold" transition:slide>{enigma_error}</p>
                         {/if}
                         <div class="form-control">
                             <p class="label">
                                 <span class="label-text">Answer</span>
                             </p>
                             <input bind:value={answer} type="text" placeholder="..." class="input input-bordered" />
-                            <button on:click={AttemptEnigmaStepForm} class="btn btn-success mt-4">Submit</button>
+                            <button class:loading={loading_attempt} on:click={AttemptEnigmaStepForm} class="btn btn-success mt-4">{loading_attempt ? '' : 'Submit'}</button>
                         </div>
                     {:else if enigma_success_message}
                         <p class="text-success text-sm font-semibold">{enigma_success_message}</p>

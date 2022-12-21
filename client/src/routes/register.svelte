@@ -5,6 +5,8 @@
     import { Register } from '$lib/utils/user';
 	import { onMount } from 'svelte';
 
+    const redirect = $page.url.searchParams.get('redirect');
+
     let email: string = '';
     let username: string = '';
     let password: string = '';
@@ -20,7 +22,7 @@
         }
         else
         {
-            goto('/login'); 
+            goto(`/login${redirect ? `?redirect=${redirect}` : ''}`);
         }
     }
 
