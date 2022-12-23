@@ -53,7 +53,6 @@ router.get("/api/enigma/me", async (req, res) => {
                 WHERE ea.user_id = $1
                 ORDER BY e.start_date DESC;
             `, [user.id]);
-            console.log(enigmas);
             return res.status(200).json({ enigmas: enigmas.rows });
         }
         else

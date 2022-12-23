@@ -1,6 +1,8 @@
 import { Pool } from 'pg';
 import express from 'express';
 import * as Routes from './routes';
+import { handler } from '../client/build/handler.js';
+
 
 require('dotenv').config();
 
@@ -12,7 +14,7 @@ export const pool = new Pool({
     port: Number(process.env.PGPORT)
 });
  
-const app = express();
+export const app = express();
 app.use(express.json());
 
 // Add headers before the routes are defined
@@ -36,7 +38,7 @@ app.use(Routes.enigma_routes);
 app.use(Routes.enigma_get_routes);
 app.use(Routes.enigma_step_routes);
 app.use(Routes.enigma_step_attempt_routes);
-
+app.use(handler);
 app.listen(3000, () => {
     console.log('Server started on port 3000');
 });

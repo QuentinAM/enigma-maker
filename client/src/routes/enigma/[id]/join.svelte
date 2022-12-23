@@ -82,7 +82,6 @@
             }
 
             const res: any = await GetEnigma(enigma_id, token);
-            console.log(res);
             if (res.message)
             {
                 enigma_error = res.message;

@@ -30,6 +30,9 @@
 
     // Selected step
     let answer: string = '';
+    let selected_step_last_attempt: EnigmaAttempt | undefined;
+    let selected_step_timer_message: string = '';
+    let selected_step_attempts_count: number = 0;
     let selected_step: EnigmaStep;
     let selected_step_completed: boolean = false;
 
@@ -50,7 +53,48 @@
         if (token)
         {
             loading_attempt = true;
+
+            if (selected_step.attempt_limit != 0 && selected_step_attempts_count >= selected_step.attempt_limit)
+            {
+                enigma_error = 'You have reached the attempt limit for this step';
+                loading_attempt = false;
+                return;
+            }
+
+            // Check last attempt time
+            const now = new Date();
+            if (selected_step.time_refresh != 0 && selected_step_last_attempt != undefined)
+            {
+                const last_attempt_time = new Date(selected_step_last_attempt.created);
+                const diff = now.getTime() - last_attempt_time.getTime();
+                const seconds = Math.floor(diff / 1000);
+                if (seconds < selected_step.time_refresh)
+                {
+                    enigma_error = `You can try again in ${selected_step.time_refresh - seconds}s`;
+                    loading_attempt = false;
+                    return;
+                }
+            }
             const res: any = await AttemptEnigmaStep(selected_step.id, answer, token);
+
+            // Add attempt to list
+            const new_attempt: EnigmaAttempt = {
+                id: -1,
+                enigma_step_id: selected_step.id,
+                user_id: -1,
+                attempt: answer,
+                created: new Date().toISOString(),
+                username: '',
+                email: '',
+                index: selected_step.index,
+                success: res.message == undefined
+            };
+            enigma_attempts = [...enigma_attempts, new_attempt];
+            selected_step_attempts_count++;
+            selected_step_last_attempt = new_attempt;
+            UpdateTimeRefresh();
+            answer = '';
+
             loading_attempt = false;
             if (res.message)
             {
@@ -58,23 +102,10 @@
             }
             else
             {
-                const new_attempt: EnigmaAttempt = {
-                    id: res.attempt.id,
-                    enigma_step_id: res.attempt.enigma_step_id,
-                    user_id: res.attempt.user_id,
-                    attempt: res.attempt.attempt,
-                    created: res.attempt.created,
-                    username: '',
-                    email: '',
-                    index: 0,
-                    success: true
-                };
-                enigma_attempts = [...enigma_attempts, new_attempt];
                 enigma.enigma_steps = enigma.enigma_steps; // To trigger update
                 selected_step_completed = true;
                 enigma_success_message = 'Correct answer!';
                 enigma_error = '';
-                answer = '';
                 next_step_index = selected_step.index + 1;
 
                 if (res.res.completed)
@@ -87,8 +118,49 @@
         }
         else
         {
-            goto('/login');
+            goto(`/login?redirect=/enigma/${enigma_id}`);
         }
+    }
+    
+    function UpdateTimeRefresh()
+    {
+        if (selected_step.time_refresh != 0 && selected_step_last_attempt != undefined)
+        {
+            const time = new Date(selected_step_last_attempt?.created);
+            const interval = setInterval(() => {
+                const now = new Date();
+                const diff = now.getTime() - time.getTime();
+                const seconds = Math.floor(diff / 1000);
+                const time_left = selected_step.time_refresh - seconds;
+                if (time_left <= 0)
+                {
+                    clearInterval(interval);
+                    selected_step_timer_message = '';
+                }
+                else
+                {
+                    selected_step_timer_message = `- You can try again in ${selected_step.time_refresh - seconds}s`;
+                }
+            }, 1000);
+        }
+        else
+        {
+            selected_step_timer_message = '';
+        }
+    }
+
+    function SelectStep(enigmaStep: EnigmaStep)
+    {
+        if (next_step_index < enigmaStep.index && next_step_index != -1) return;
+        selected_step = enigmaStep;
+        selected_step_completed = HasCompletedStep(enigmaStep);
+     
+        const attempts = enigma_attempts.filter((attempt) => attempt.enigma_step_id == enigmaStep.id);
+        selected_step_attempts_count = attempts.length;
+        selected_step_last_attempt = attempts.sort((a, b) => a.created > b.created ? -1 : 1)[0];
+    
+        answer = '';
+        UpdateTimeRefresh();
     }
 
     onMount(async () => {
@@ -125,7 +197,6 @@
                     return goto(`/login?message=${res.message}`);
                 }
                 enigma_attempts = res2.enigma_step_attempts as EnigmaAttempt[];
-                console.log(enigma_attempts);
 
                 // Get index of next uncompleted step
                 for (let i = 0; i < enigma.enigma_steps.length; i++)
@@ -200,9 +271,7 @@
                     {#if enigma.enigma_steps}
                         {#each enigma.enigma_steps as enigmaStep}
                             <EnigmaStepCard on:click={() => {
-                                if (next_step_index < enigmaStep.index && next_step_index != -1) return;
-                                selected_step = enigmaStep;
-                                selected_step_completed = HasCompletedStep(enigmaStep);
+                                SelectStep(enigmaStep);
                             }} {enigmaStep} blur={next_step_index < enigmaStep.index && next_step_index != -1} details completed={HasCompletedStep(enigmaStep)} />
                         {/each}
                     {/if}
@@ -214,8 +283,8 @@
                     <p class="font-semibold text-xl">{selected_step.index}/{enigma.enigma_steps.length} - {selected_step.title}</p>
                     <p class="text-lg mt-3 whitespace-pre-line">{@html FormatDescription(selected_step.description) ?? 'No description...'}</p>
                     <div class="divider divider-vertical"></div>
-                    <p><span class="font-semibold">Attempt limit</span>: {selected_step.attempt_limit == 0 ? 'No attempt limit' : selected_step.attempt_limit}</p>
-                    <p><span class="font-semibold">Time between guess</span>: {selected_step.time_refresh == 0 ? 'No time between guess' : selected_step.time_refresh + 's'}</p>
+                    <p><span class="font-semibold">Attempt limit</span>: {selected_step.attempt_limit == 0 ? 'No attempt limit' : selected_step.attempt_limit} {selected_step.attempt_limit == 0 ? `(done ${selected_step_attempts_count})` : `(${selected_step.attempt_limit - selected_step_attempts_count} left)`}</p>
+                    <p><span class="font-semibold">Time between guess</span>: {selected_step.time_refresh == 0 ? 'No time between guess' : selected_step.time_refresh + 's'} {selected_step_timer_message}</p>
                     {#if selected_step.case_sensitive}
                         <div class="badge badge-outline">Case sensitive</div>
                     {/if}

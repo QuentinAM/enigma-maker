@@ -1,6 +1,5 @@
 import { pool } from "../index";
-import { CheckParams, ParseDate } from "../utils";
-import { CheckSessionToken } from "../utils";
+import { CheckParams, ParseDate, FormatDateUni, ToLocalDate, CheckSessionToken } from "../utils";
 import express  from "express";
 import { QueryResult } from "pg";
 
@@ -46,8 +45,6 @@ router.post("/api/enigma_step_attempt/:step_id", async (req, res) => {
             {
                 return res.status(400).json({ message: "Step not found" });
             }
-
-            // Check if the step is the next step
             if (next_step.rows[0].id != step_id)
             {
                 return res.status(400).json({ message: "Not the next step" });
@@ -73,7 +70,8 @@ router.post("/api/enigma_step_attempt/:step_id", async (req, res) => {
             // At this point we are sure we have the right step and the enigma is on going
 
             // Check if user can answer now by checking the time his previous attempt was made
-            const last_attempt: QueryResult = await pool.query("SELECT * FROM enigma_step_attempt WHERE enigma_step_id = $1 AND user_id = $2 ORDER BY id DESC;", [step_id, user.id]);
+            const now: Date = ToLocalDate(new Date());
+            const last_attempt: QueryResult = await pool.query("SELECT * FROM enigma_step_attempt WHERE enigma_step_id = $1 AND user_id = $2 ORDER BY created DESC;", [step_id, user.id]);
             if (last_attempt.rowCount > 0)
             {
                 // Check if the user can answer again by checking how much attempt he made
@@ -82,19 +80,20 @@ router.post("/api/enigma_step_attempt/:step_id", async (req, res) => {
                     return res.status(400).json({ message: "You can't answer again, you reached the attempt limit" });
                 }
 
-                const last_attempt_date: Date = new Date(last_attempt.rows[0].created);
-                const now: Date = new Date();
+                const last_attempt_date: Date = ToLocalDate(new Date(last_attempt.rows[0].created));
 
                 // Get diff in seconds
-                const diff: number = (now.getTime() - last_attempt_date.getTime()) / 1000;
-                if (diff < step.rows[0].time_refresh)
+                const diff = now.getTime() - last_attempt_date.getTime();
+                const seconds = Math.floor(diff / 1000);
+                const time_left = step.rows[0].time_refresh - seconds;
+                if (time_left > 0)
                 {
-                    return res.status(400).json({ message: `You can answer again in ${step.rows[0].time_refresh - diff} seconds` });
+                    return res.status(400).json({ message: `You can answer again in ${time_left} seconds` });
                 }
             }
 
             // Add the attempt to the database
-            const enigma_step_attempt: QueryResult = await pool.query("INSERT INTO enigma_step_attempt (id, enigma_step_id, user_id, attempt) VALUES (DEFAULT, $1, $2, $3) RETURNING *;", [step_id, user.id, attempt]);
+            const enigma_step_attempt: QueryResult = await pool.query("INSERT INTO enigma_step_attempt (id, enigma_step_id, user_id, attempt, created) VALUES (DEFAULT, $1, $2, $3, $4) RETURNING *;", [step_id, user.id, attempt, FormatDateUni(now)]);
 
             // Check if the attempt is correct
             const case_sensitive: boolean = step.rows[0].case_sensitive;

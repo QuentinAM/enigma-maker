@@ -27,3 +27,13 @@ export function ParseDate(date: string): Date
     const dateSplit3 = dateSplit[1].split(":");
     return new Date(parseInt(dateSplit2[2]), parseInt(dateSplit2[1]) - 1, parseInt(dateSplit2[0]), parseInt(dateSplit3[0]), parseInt(dateSplit3[1]), parseInt(dateSplit3[2]));
 }
+
+export function ToLocalDate(date: Date): Date
+{
+    return new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+}
+
+export function FormatDateUni(date: Date): string
+{
+    return date.toISOString().replace("T", " ").replace("Z", "");
+}

@@ -37,32 +37,39 @@
             let res: any = await GetMyEnigma(token);
             if (res.message)
             {
-                message = res.message;
-                loading = false;
-                return;
-            }
-            enigmas = res.enigmas as Enigma[];
-            console.log(enigmas);
-
-            // For each enigma, check if it has started
-            enigmas.forEach((enigma: Enigma) => {
-                // Countdown message
-                if (ParseDate(enigma.start_date) > new Date())
+                if (res.message == 'jwt expired')
                 {
-                    enigma.countdown_message = 'Enigma starts in';
-                    enigma.countdown_date = enigma.start_date;
-                }
-                else if (ParseDate(enigma.end_date) < new Date())
-                {
-                    enigma.countdown_message = 'Enigma ended';
-                    enigma.countdown_date = enigma.end_date;
+                    message = 'Your session has expired, please login again';
                 }
                 else
                 {
-                    enigma.countdown_message = 'Enigma ends in';
-                    enigma.countdown_date = enigma.end_date;
+                    message = res.message;
                 }
-            });
+            }
+            else
+            {   
+                enigmas = res.enigmas as Enigma[];
+
+                // For each enigma, check if it has started
+                enigmas.forEach((enigma: Enigma) => {
+                    // Countdown message
+                    if (ParseDate(enigma.start_date) > new Date())
+                    {
+                        enigma.countdown_message = 'Enigma starts in';
+                        enigma.countdown_date = enigma.start_date;
+                    }
+                    else if (ParseDate(enigma.end_date) < new Date())
+                    {
+                        enigma.countdown_message = 'Enigma ended';
+                        enigma.countdown_date = enigma.end_date;
+                    }
+                    else
+                    {
+                        enigma.countdown_message = 'Enigma ends in';
+                        enigma.countdown_date = enigma.end_date;
+                    }
+                });
+            }
         }
         else
         {
@@ -115,11 +122,11 @@
             {#if message}
                 <p class="text-error text-sm font-semibold">{message}</p>
             {/if}
-            {#if showing_public}
+            {#if showing_public && public_enigmas}
                 {#each public_enigmas as enigma}
                     <EnigmaCard is_public {enigma} />
                 {/each}
-            {:else}
+            {:else if enigmas}
                 {#each enigmas as enigma}
                     <EnigmaCard step_message={`${(enigma.current_step_index ?? 0) + 1}`} {enigma} />
                 {/each}

@@ -62,7 +62,6 @@
                 else
                 {
                     // Create new enigma object
-                    console.log(res.step);
                     const new_enigma_step: EnigmaStep = res.step;
                     enigma.enigma_steps = [...enigma.enigma_steps, new_enigma_step];
                     selected_step = new_enigma_step;
@@ -229,7 +228,6 @@
 
             // Get enigma users
             const res2: any = await GetEnigmaUsers(enigma.id, token);
-            console.log(res2);
             if (res2.message)
             {
                 enigma_error = res2.message;
